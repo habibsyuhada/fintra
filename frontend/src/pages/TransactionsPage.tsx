@@ -217,9 +217,9 @@ export default function TransactionsPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <h1 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Transaksi</h1>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <button
             onClick={() => setShowForm(showForm === 'transaction' ? false : 'transaction')}
             className="rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-indigo-500"
@@ -278,6 +278,7 @@ export default function TransactionsPage() {
         {isLoading ? (
           <p className="p-4 text-sm text-gray-500">Memuat...</p>
         ) : data && data.items.length > 0 ? (
+          <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="bg-gray-50 dark:bg-gray-800 text-left text-xs uppercase text-gray-500">
               <tr>
@@ -318,6 +319,7 @@ export default function TransactionsPage() {
               ))}
             </tbody>
           </table>
+          </div>
         ) : (
           <p className="p-4 text-sm text-gray-500">Belum ada transaksi.</p>
         )}

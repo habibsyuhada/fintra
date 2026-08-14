@@ -54,7 +54,7 @@ export default function AccountsPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <h1 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Akun</h1>
         <button
           onClick={() => setShowForm((v) => !v)}
@@ -101,6 +101,7 @@ export default function AccountsPage() {
         {isLoading ? (
           <p className="p-4 text-sm text-gray-500">Memuat...</p>
         ) : accounts && accounts.length > 0 ? (
+          <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="bg-gray-50 dark:bg-gray-800 text-left text-xs uppercase text-gray-500">
               <tr>
@@ -132,6 +133,7 @@ export default function AccountsPage() {
               ))}
             </tbody>
           </table>
+          </div>
         ) : (
           <p className="p-4 text-sm text-gray-500">Belum ada akun.</p>
         )}
