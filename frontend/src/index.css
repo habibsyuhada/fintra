@@ -3,11 +3,11 @@
 
 /* Themes are picked at runtime via the `data-theme` attribute on <html>
  * (see src/lib/settings-store.ts), not the OS color scheme, so `dark:`
- * utilities must key off it instead of `prefers-color-scheme`. The "dark"
- * and "dim" themes are both dark-family, so both enable `dark:` styles;
- * "dim" additionally overrides the slate/indigo/violet tokens below to
- * look softer and less contrasty than plain "dark". */
-@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *, [data-theme="dim"], [data-theme="dim"] *));
+ * utilities must key off it instead of `prefers-color-scheme`. "dark",
+ * "dim" and "stars" are all dark-family, so all three enable `dark:`
+ * styles; "dim" and "stars" additionally override the slate/indigo/violet
+ * tokens below to get their own look instead of plain "dark". */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *, [data-theme="dim"], [data-theme="dim"] *, [data-theme="stars"], [data-theme="stars"] *));
 
 :root {
   color-scheme: light dark;
@@ -15,12 +15,15 @@
 
 [data-theme="light"],
 [data-theme="flat"],
-[data-theme="cat"] {
+[data-theme="cat"],
+[data-theme="geometric"],
+[data-theme="sakura"] {
   color-scheme: light;
 }
 
 [data-theme="dark"],
-[data-theme="dim"] {
+[data-theme="dim"],
+[data-theme="stars"] {
   color-scheme: dark;
 }
 
@@ -39,7 +42,8 @@ body {
 }
 
 [data-theme="dark"] body,
-[data-theme="dim"] body {
+[data-theme="dim"] body,
+[data-theme="stars"] body {
   background-color: var(--color-slate-950);
 }
 
@@ -53,7 +57,8 @@ body {
 }
 
 [data-theme="dark"] *,
-[data-theme="dim"] * {
+[data-theme="dim"] *,
+[data-theme="stars"] * {
   scrollbar-color: var(--color-slate-700) transparent;
 }
 
@@ -68,7 +73,8 @@ body {
 }
 
 [data-theme="dark"] ::-webkit-scrollbar-thumb,
-[data-theme="dim"] ::-webkit-scrollbar-thumb {
+[data-theme="dim"] ::-webkit-scrollbar-thumb,
+[data-theme="stars"] ::-webkit-scrollbar-thumb {
   background-color: var(--color-slate-700);
 }
 
@@ -137,8 +143,16 @@ body {
   border-radius: 0.25rem;
 }
 
-/* Kucing (Cat): a playful light theme with a pink accent and a tiled
- * cat-paw pattern behind the app's background surfaces. */
+/* Decorative themes below each override the accent palette and paint a
+ * sparse, tiled motif behind `.bg-slate-50` (light-family themes) or
+ * `.dark\:bg-slate-950` (dark-family themes) — the exact classes the app
+ * shell already uses for its page background, so no component needs to
+ * change. Each SVG tile scatters just a handful of shapes at varied
+ * position/rotation/scale over a large tile so the repeat isn't obvious
+ * and the motif stays a light touch rather than wallpaper. */
+
+/* Kucing (Cat): a playful light theme with a pink accent and a light
+ * scatter of cat paw prints. */
 [data-theme="cat"] {
   --color-slate-50: #fff3f9;
   --color-indigo-600: #db2777;
@@ -146,11 +160,70 @@ body {
   --color-violet-600: #be185d;
   --color-violet-700: #9d174d;
   --color-violet-800: #831843;
-  --cat-paw-pattern: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Cg fill='%23f472b6' fill-opacity='0.35' transform='rotate(-18 50 50)'%3E%3Cellipse cx='50' cy='62' rx='16' ry='13'/%3E%3Cellipse cx='30' cy='42' rx='7' ry='9'/%3E%3Cellipse cx='46' cy='30' rx='7' ry='9'/%3E%3Cellipse cx='64' cy='34' rx='7' ry='9'/%3E%3Cellipse cx='74' cy='50' rx='6.5' ry='8'/%3E%3C/g%3E%3C/svg%3E");
+  --pattern-cat: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220' viewBox='0 0 220 220'%3E%3Cdefs%3E%3Cg id='p'%3E%3Cellipse cx='0' cy='12' rx='16' ry='13'/%3E%3Cellipse cx='-20' cy='-8' rx='7' ry='9'/%3E%3Cellipse cx='-4' cy='-20' rx='7' ry='9'/%3E%3Cellipse cx='14' cy='-16' rx='7' ry='9'/%3E%3Cellipse cx='24' cy='0' rx='6.5' ry='8'/%3E%3C/g%3E%3C/defs%3E%3Cg fill='%23f472b6' fill-opacity='0.25'%3E%3Cuse href='%23p' transform='translate(40,50) rotate(-20) scale(0.85)'/%3E%3Cuse href='%23p' transform='translate(160,45) rotate(15) scale(0.6)'/%3E%3Cuse href='%23p' transform='translate(95,155) rotate(-40) scale(0.95)'/%3E%3C/g%3E%3C/svg%3E");
 }
 
 [data-theme="cat"] .bg-slate-50 {
-  background-image: var(--cat-paw-pattern);
+  background-image: var(--pattern-cat);
   background-repeat: repeat;
-  background-size: 90px 90px;
+  background-size: 220px 220px;
+}
+
+/* Malam Berbintang (Stars): a dark theme with a gold accent and a night
+ * sky of sparse sparkles and dots. */
+[data-theme="stars"] {
+  --color-slate-950: #0b1026;
+  --color-slate-900: #131a35;
+  --color-slate-800: #1d2547;
+  --color-slate-700: #2a3363;
+  --color-slate-400: #a6acd6;
+  --color-slate-300: #c2c6e6;
+  --color-indigo-600: #f5b83d;
+  --color-indigo-500: #ffcf5c;
+  --color-violet-600: #c9a44c;
+  --color-violet-700: #a8873c;
+  --color-violet-800: #86692e;
+  --pattern-stars: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 200 200'%3E%3Cdefs%3E%3Cpath id='s' d='M0 -7 L2 -2 7 0 2 2 0 7 -2 2 -7 0 -2 -2 Z'/%3E%3C/defs%3E%3Cg fill='%23fbbf24' fill-opacity='0.75'%3E%3Cuse href='%23s' transform='translate(30,40)'/%3E%3Cuse href='%23s' transform='translate(150,25) scale(0.6)'/%3E%3Cuse href='%23s' transform='translate(100,115) scale(0.8)'/%3E%3Cuse href='%23s' transform='translate(170,155) scale(0.5)'/%3E%3C/g%3E%3Cg fill='%23ffffff' fill-opacity='0.55'%3E%3Ccircle cx='70' cy='75' r='1.4'/%3E%3Ccircle cx='130' cy='60' r='1.1'/%3E%3Ccircle cx='20' cy='120' r='1.3'/%3E%3Ccircle cx='180' cy='95' r='1'/%3E%3Ccircle cx='55' cy='165' r='1.2'/%3E%3Ccircle cx='115' cy='20' r='1'/%3E%3C/g%3E%3C/svg%3E");
+}
+
+[data-theme="stars"] .dark\:bg-slate-950 {
+  background-image: var(--pattern-stars);
+  background-repeat: repeat;
+  background-size: 200px 200px;
+}
+
+/* Geometrik: a light theme with a warm amber accent and a sparse scatter
+ * of outlined geometric shapes. */
+[data-theme="geometric"] {
+  --color-slate-50: #fdfaf6;
+  --color-indigo-600: #d97706;
+  --color-indigo-500: #f59e0b;
+  --color-violet-600: #b45309;
+  --color-violet-700: #92400e;
+  --color-violet-800: #78350f;
+  --pattern-geometric: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240' viewBox='0 0 240 240'%3E%3Cg fill='none' stroke='%23d97706' stroke-opacity='0.3' stroke-width='2'%3E%3Cpolygon points='40,20 60,55 20,55' transform='rotate(10 40 40)'/%3E%3Cpolygon points='170,30 190,42 190,66 170,78 150,66 150,42' transform='rotate(-8 170 54)'/%3E%3Ccircle cx='60' cy='170' r='16'/%3E%3Crect x='150' y='150' width='30' height='30' transform='rotate(20 165 165)'/%3E%3Cpolygon points='210,140 225,168 195,168' transform='rotate(-15 210 155)'/%3E%3C/g%3E%3C/svg%3E");
+}
+
+[data-theme="geometric"] .bg-slate-50 {
+  background-image: var(--pattern-geometric);
+  background-repeat: repeat;
+  background-size: 240px 240px;
+}
+
+/* Sakura: a light theme with a soft rose accent and a sparse scatter of
+ * five-petal blossoms. */
+[data-theme="sakura"] {
+  --color-slate-50: #fff0f3;
+  --color-indigo-600: #e11d48;
+  --color-indigo-500: #f43f5e;
+  --color-violet-600: #be123c;
+  --color-violet-700: #9f1239;
+  --color-violet-800: #881337;
+  --pattern-sakura: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220' viewBox='0 0 220 220'%3E%3Cdefs%3E%3Cg id='f'%3E%3Cellipse cx='0' cy='-9' rx='5' ry='8'/%3E%3Cellipse cx='0' cy='-9' rx='5' ry='8' transform='rotate(72)'/%3E%3Cellipse cx='0' cy='-9' rx='5' ry='8' transform='rotate(144)'/%3E%3Cellipse cx='0' cy='-9' rx='5' ry='8' transform='rotate(216)'/%3E%3Cellipse cx='0' cy='-9' rx='5' ry='8' transform='rotate(288)'/%3E%3C/g%3E%3C/defs%3E%3Cg fill='%23fb7185' fill-opacity='0.3'%3E%3Cuse href='%23f' transform='translate(45,50) scale(0.9) rotate(15)'/%3E%3Cuse href='%23f' transform='translate(165,45) scale(0.6) rotate(-30)'/%3E%3Cuse href='%23f' transform='translate(110,155) scale(1) rotate(50)'/%3E%3C/g%3E%3C/svg%3E");
+}
+
+[data-theme="sakura"] .bg-slate-50 {
+  background-image: var(--pattern-sakura);
+  background-repeat: repeat;
+  background-size: 220px 220px;
 }
