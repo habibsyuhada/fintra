@@ -1,0 +1,237 @@
+// Prisma schema — Fintra personal finance app
+
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  moduleFormat = "cjs"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum AccountType {
+  CASH
+  BANK
+  EWALLET
+  CREDIT_CARD
+}
+
+enum CategoryType {
+  INCOME
+  EXPENSE
+}
+
+enum TransactionType {
+  INCOME
+  EXPENSE
+  TRANSFER
+}
+
+enum RecurringFrequency {
+  DAILY
+  WEEKLY
+  MONTHLY
+  YEARLY
+}
+
+enum BudgetPeriod {
+  WEEKLY
+  MONTHLY
+  YEARLY
+}
+
+enum ReceiptStatus {
+  PENDING
+  CONFIRMED
+  REJECTED
+}
+
+model User {
+  id                String    @id @default(uuid())
+  email             String    @unique
+  passwordHash      String    @map("password_hash")
+  name              String
+  emailVerifiedAt   DateTime? @map("email_verified_at")
+  googleId          String?   @unique @map("google_id")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+
+  accounts       Account[]
+  categories     Category[]
+  budgets        Budget[]
+  refreshTokens  RefreshToken[]
+  auditLogs      AuditLog[]
+
+  @@map("users")
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  tokenHash String   @map("token_hash")
+  expiresAt DateTime @map("expires_at")
+  revokedAt DateTime? @map("revoked_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("refresh_tokens")
+}
+
+model Account {
+  id             String      @id @default(uuid())
+  userId         String      @map("user_id")
+  name           String
+  type           AccountType
+  currency       String      @default("IDR")
+  initialBalance Decimal     @default(0) @map("initial_balance") @db.Decimal(18, 2)
+  isArchived     Boolean     @default(false) @map("is_archived")
+  createdAt      DateTime    @default(now()) @map("created_at")
+  updatedAt      DateTime    @updatedAt @map("updated_at")
+
+  user               User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions       Transaction[]
+  recurringRules     RecurringRule[]
+  transfersFrom      Transfer[]    @relation("TransferFrom")
+  transfersTo        Transfer[]    @relation("TransferTo")
+
+  @@index([userId])
+  @@map("accounts")
+}
+
+model Category {
+  id       String       @id @default(uuid())
+  userId   String       @map("user_id")
+  name     String
+  type     CategoryType
+  icon     String?
+  color    String?
+  parentId String?      @map("parent_id")
+
+  user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  parent         Category?       @relation("CategoryToSubcategory", fields: [parentId], references: [id], onDelete: SetNull)
+  subcategories  Category[]      @relation("CategoryToSubcategory")
+  transactions   Transaction[]
+  recurringRules RecurringRule[]
+  budgets        Budget[]
+
+  @@index([userId])
+  @@map("categories")
+}
+
+model Transaction {
+  id                  String          @id @default(uuid())
+  accountId           String          @map("account_id")
+  categoryId          String?         @map("category_id")
+  amount              Decimal         @db.Decimal(18, 2)
+  type                TransactionType
+  note                String?
+  date                DateTime
+  attachmentUrl       String?         @map("attachment_url")
+  tags                String[]        @default([])
+  isRecurringInstance Boolean         @default(false) @map("is_recurring_instance")
+  recurringRuleId     String?         @map("recurring_rule_id")
+  exchangeRate        Decimal?        @map("exchange_rate") @db.Decimal(18, 6)
+  isDeleted           Boolean         @default(false) @map("is_deleted")
+  deletedAt           DateTime?       @map("deleted_at")
+  createdAt           DateTime        @default(now()) @map("created_at")
+  updatedAt           DateTime        @updatedAt @map("updated_at")
+
+  account       Account        @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  category      Category?      @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  recurringRule RecurringRule? @relation(fields: [recurringRuleId], references: [id], onDelete: SetNull)
+  receipt       Receipt?
+
+  @@index([accountId])
+  @@index([categoryId])
+  @@index([date])
+  @@map("transactions")
+}
+
+model RecurringRule {
+  id           String             @id @default(uuid())
+  accountId    String             @map("account_id")
+  categoryId   String?            @map("category_id")
+  amount       Decimal            @db.Decimal(18, 2)
+  type         TransactionType
+  note         String?
+  frequency    RecurringFrequency
+  nextRunDate  DateTime           @map("next_run_date")
+  isActive     Boolean            @default(true) @map("is_active")
+  createdAt    DateTime           @default(now()) @map("created_at")
+  updatedAt    DateTime           @updatedAt @map("updated_at")
+
+  account      Account       @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  category     Category?     @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  transactions Transaction[]
+
+  @@index([accountId])
+  @@index([nextRunDate])
+  @@map("recurring_rules")
+}
+
+model Budget {
+  id         String       @id @default(uuid())
+  userId     String       @map("user_id")
+  categoryId String       @map("category_id")
+  amount     Decimal      @db.Decimal(18, 2)
+  period     BudgetPeriod
+  startDate  DateTime     @map("start_date")
+  createdAt  DateTime     @default(now()) @map("created_at")
+  updatedAt  DateTime     @updatedAt @map("updated_at")
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("budgets")
+}
+
+model Transfer {
+  id            String   @id @default(uuid())
+  fromAccountId String   @map("from_account_id")
+  toAccountId   String   @map("to_account_id")
+  amount        Decimal  @db.Decimal(18, 2)
+  date          DateTime
+  note          String?
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  fromAccount Account @relation("TransferFrom", fields: [fromAccountId], references: [id], onDelete: Cascade)
+  toAccount   Account @relation("TransferTo", fields: [toAccountId], references: [id], onDelete: Cascade)
+
+  @@index([fromAccountId])
+  @@index([toAccountId])
+  @@map("transfers")
+}
+
+model Receipt {
+  id             String        @id @default(uuid())
+  transactionId  String?       @unique @map("transaction_id")
+  imageUrl       String        @map("image_url")
+  rawAiResponse  Json?         @map("raw_ai_response")
+  status         ReceiptStatus @default(PENDING)
+  createdAt      DateTime      @default(now()) @map("created_at")
+  updatedAt      DateTime      @updatedAt @map("updated_at")
+
+  transaction Transaction? @relation(fields: [transactionId], references: [id], onDelete: SetNull)
+
+  @@map("receipts")
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String?  @map("user_id")
+  entity    String
+  entityId  String   @map("entity_id")
+  action    String
+  changes   Json?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([entity, entityId])
+  @@map("audit_logs")
+}
