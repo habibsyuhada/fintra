@@ -51,6 +51,10 @@ class EnvironmentVariables {
   @IsString()
   @IsOptional()
   OPENROUTER_MODEL?: string;
+
+  @IsString()
+  @IsOptional()
+  SENTRY_DSN?: string;
 }
 
 export function validate(config: Record<string, unknown>) {

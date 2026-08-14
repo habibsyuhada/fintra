@@ -5,12 +5,16 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { AuditLogService } from '../audit-log/audit-log.service';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
 
 @Injectable()
 export class CategoriesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly auditLog: AuditLogService,
+  ) {}
 
   private async findOwned(userId: string, id: string) {
     const category = await this.prisma.category.findUnique({ where: { id } });
@@ -28,7 +32,7 @@ export class CategoriesService {
         );
       }
     }
-    return this.prisma.category.create({
+    const category = await this.prisma.category.create({
       data: {
         userId,
         name: dto.name,
@@ -38,6 +42,10 @@ export class CategoriesService {
         parentId: dto.parentId,
       },
     });
+    await this.auditLog.record(userId, 'category', category.id, 'CREATE', {
+      ...dto,
+    });
+    return category;
   }
 
   findAll(userId: string) {
@@ -57,12 +65,18 @@ export class CategoriesService {
     if (dto.parentId === id) {
       throw new BadRequestException('A category cannot be its own parent');
     }
-    return this.prisma.category.update({ where: { id }, data: dto });
+    const category = await this.prisma.category.update({
+      where: { id },
+      data: dto,
+    });
+    await this.auditLog.record(userId, 'category', id, 'UPDATE', { ...dto });
+    return category;
   }
 
   async remove(userId: string, id: string) {
     await this.findOwned(userId, id);
     await this.prisma.category.delete({ where: { id } });
+    await this.auditLog.record(userId, 'category', id, 'DELETE');
     return { success: true };
   }
 }

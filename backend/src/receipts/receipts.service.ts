@@ -8,6 +8,7 @@ import { randomUUID } from 'crypto';
 import { extname, join } from 'path';
 import { mkdir, writeFile } from 'fs/promises';
 import { PrismaService } from '../prisma/prisma.service';
+import { AuditLogService } from '../audit-log/audit-log.service';
 import { TransactionsService } from '../transactions/transactions.service';
 import { OpenRouterService } from './openrouter.service';
 import { ConfirmReceiptDto } from './dto/confirm-receipt.dto';
@@ -20,6 +21,7 @@ export class ReceiptsService {
     private readonly prisma: PrismaService,
     private readonly openRouter: OpenRouterService,
     private readonly transactionsService: TransactionsService,
+    private readonly auditLog: AuditLogService,
   ) {}
 
   private async findOwned(userId: string, id: string) {
@@ -48,12 +50,18 @@ export class ReceiptsService {
           status: 'PENDING',
         },
       });
+      await this.auditLog.record(userId, 'receipt', receipt.id, 'CREATE', {
+        hasDraft: true,
+      });
       return { receipt, draft: extraction };
     } catch (err) {
       // Parsing/AI failure: still keep the uploaded photo as a receipt record
       // so the user can fall back to manual entry without re-uploading.
       const receipt = await this.prisma.receipt.create({
         data: { userId, imageUrl, rawAiResponse: undefined, status: 'PENDING' },
+      });
+      await this.auditLog.record(userId, 'receipt', receipt.id, 'CREATE', {
+        hasDraft: false,
       });
       return {
         receipt,
@@ -92,6 +100,10 @@ export class ReceiptsService {
       where: { id },
       data: { transactionId: transaction.id, status: 'CONFIRMED' },
     });
+    await this.auditLog.record(userId, 'receipt', id, 'UPDATE', {
+      status: 'CONFIRMED',
+      transactionId: transaction.id,
+    });
 
     return transaction;
   }
@@ -104,6 +116,9 @@ export class ReceiptsService {
     await this.prisma.receipt.update({
       where: { id },
       data: { status: 'REJECTED' },
+    });
+    await this.auditLog.record(userId, 'receipt', id, 'UPDATE', {
+      status: 'REJECTED',
     });
     return { success: true };
   }

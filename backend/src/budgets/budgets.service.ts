@@ -5,6 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { AuditLogService } from '../audit-log/audit-log.service';
 import { CreateBudgetDto } from './dto/create-budget.dto';
 import { UpdateBudgetDto } from './dto/update-budget.dto';
 
@@ -35,7 +36,10 @@ function currentPeriodWindow(
 
 @Injectable()
 export class BudgetsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly auditLog: AuditLogService,
+  ) {}
 
   private async findOwned(userId: string, id: string) {
     const budget = await this.prisma.budget.findUnique({ where: { id } });
@@ -107,6 +111,9 @@ export class BudgetsService {
         startDate: new Date(dto.startDate),
       },
     });
+    await this.auditLog.record(userId, 'budget', budget.id, 'CREATE', {
+      ...dto,
+    });
     return this.withSpent(budget);
   }
 
@@ -138,12 +145,14 @@ export class BudgetsService {
         startDate: dto.startDate ? new Date(dto.startDate) : undefined,
       },
     });
+    await this.auditLog.record(userId, 'budget', id, 'UPDATE', { ...dto });
     return this.withSpent(budget);
   }
 
   async remove(userId: string, id: string) {
     await this.findOwned(userId, id);
     await this.prisma.budget.delete({ where: { id } });
+    await this.auditLog.record(userId, 'budget', id, 'DELETE');
     return { success: true };
   }
 }

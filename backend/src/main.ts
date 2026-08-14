@@ -3,12 +3,31 @@ import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { ConfigService } from '@nestjs/config';
 import { ValidationPipe } from '@nestjs/common';
+import { Logger } from 'nestjs-pino';
+import * as Sentry from '@sentry/node';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
 import { AppModule } from './app.module';
+import { SentryExceptionFilter } from './common/filters/sentry-exception.filter';
+
+function initSentry() {
+  const dsn = process.env.SENTRY_DSN;
+  if (!dsn) return;
+  Sentry.init({
+    dsn,
+    environment: process.env.NODE_ENV,
+    tracesSampleRate: 0.1,
+  });
+}
 
 async function bootstrap() {
-  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  initSentry();
+
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
+    bufferLogs: true,
+  });
+  app.useLogger(app.get(Logger));
+
   const config = app.get(ConfigService);
 
   app.use(helmet());
@@ -26,6 +45,7 @@ async function bootstrap() {
       transform: true,
     }),
   );
+  app.useGlobalFilters(new SentryExceptionFilter(app.getHttpAdapter()));
 
   const port = config.get<string>('PORT') ?? 3000;
   await app.listen(port);

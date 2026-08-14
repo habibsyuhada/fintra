@@ -10,6 +10,7 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { Throttle } from '@nestjs/throttler';
 import { JwtAccessGuard } from '../auth/guards/jwt-access.guard';
 import {
   CurrentUser,
@@ -31,6 +32,7 @@ const MAX_FILE_SIZE = 10 * 1024 * 1024;
 export class ReceiptsController {
   constructor(private readonly receiptsService: ReceiptsService) {}
 
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
   @Post('scan')
   @UseInterceptors(
     FileInterceptor('file', { limits: { fileSize: MAX_FILE_SIZE } }),

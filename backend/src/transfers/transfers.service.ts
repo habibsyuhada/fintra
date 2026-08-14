@@ -5,11 +5,15 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { AuditLogService } from '../audit-log/audit-log.service';
 import { CreateTransferDto } from './dto/create-transfer.dto';
 
 @Injectable()
 export class TransfersService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly auditLog: AuditLogService,
+  ) {}
 
   private async assertOwnership(userId: string, accountId: string) {
     const account = await this.prisma.account.findUnique({
@@ -29,7 +33,7 @@ export class TransfersService {
     await this.assertOwnership(userId, dto.fromAccountId);
     await this.assertOwnership(userId, dto.toAccountId);
 
-    return this.prisma.transfer.create({
+    const transfer = await this.prisma.transfer.create({
       data: {
         fromAccountId: dto.fromAccountId,
         toAccountId: dto.toAccountId,
@@ -38,6 +42,10 @@ export class TransfersService {
         note: dto.note,
       },
     });
+    await this.auditLog.record(userId, 'transfer', transfer.id, 'CREATE', {
+      ...dto,
+    });
+    return transfer;
   }
 
   async findAll(userId: string, accountId?: string) {
@@ -67,6 +75,7 @@ export class TransfersService {
     if (!transfer) throw new NotFoundException('Transfer not found');
     if (transfer.fromAccount.userId !== userId) throw new ForbiddenException();
     await this.prisma.transfer.delete({ where: { id } });
+    await this.auditLog.record(userId, 'transfer', id, 'DELETE');
     return { success: true };
   }
 }

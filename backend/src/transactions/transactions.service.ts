@@ -5,13 +5,17 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { AuditLogService } from '../audit-log/audit-log.service';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
 import { UpdateTransactionDto } from './dto/update-transaction.dto';
 import { QueryTransactionDto } from './dto/query-transaction.dto';
 
 @Injectable()
 export class TransactionsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly auditLog: AuditLogService,
+  ) {}
 
   private async assertAccountOwnership(userId: string, accountId: string) {
     const account = await this.prisma.account.findUnique({
@@ -53,7 +57,7 @@ export class TransactionsService {
       await this.assertCategory(userId, dto.categoryId, dto.type);
     }
 
-    return this.prisma.transaction.create({
+    const transaction = await this.prisma.transaction.create({
       data: {
         accountId: dto.accountId,
         categoryId: dto.categoryId,
@@ -65,6 +69,14 @@ export class TransactionsService {
         attachmentUrl: dto.attachmentUrl,
       },
     });
+    await this.auditLog.record(
+      userId,
+      'transaction',
+      transaction.id,
+      'CREATE',
+      { ...dto },
+    );
+    return transaction;
   }
 
   async findAll(userId: string, query: QueryTransactionDto) {
@@ -128,7 +140,7 @@ export class TransactionsService {
       );
     }
 
-    return this.prisma.transaction.update({
+    const transaction = await this.prisma.transaction.update({
       where: { id },
       data: {
         accountId: targetAccountId,
@@ -141,6 +153,8 @@ export class TransactionsService {
         attachmentUrl: dto.attachmentUrl,
       },
     });
+    await this.auditLog.record(userId, 'transaction', id, 'UPDATE', { ...dto });
+    return transaction;
   }
 
   async remove(userId: string, id: string) {
@@ -148,6 +162,9 @@ export class TransactionsService {
     await this.prisma.transaction.update({
       where: { id },
       data: { isDeleted: true, deletedAt: new Date() },
+    });
+    await this.auditLog.record(userId, 'transaction', id, 'DELETE', {
+      softDelete: true,
     });
     return { success: true };
   }

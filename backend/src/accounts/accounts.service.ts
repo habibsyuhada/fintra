@@ -5,12 +5,16 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { Prisma } from '../generated/prisma/client';
+import { AuditLogService } from '../audit-log/audit-log.service';
 import { CreateAccountDto } from './dto/create-account.dto';
 import { UpdateAccountDto } from './dto/update-account.dto';
 
 @Injectable()
 export class AccountsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly auditLog: AuditLogService,
+  ) {}
 
   private async computeBalance(
     accountId: string,
@@ -62,6 +66,9 @@ export class AccountsService {
         initialBalance: dto.initialBalance ?? 0,
       },
     });
+    await this.auditLog.record(userId, 'account', account.id, 'CREATE', {
+      ...dto,
+    });
     return { ...account, balance: account.initialBalance };
   }
 
@@ -93,6 +100,9 @@ export class AccountsService {
       where: { id },
       data: dto,
     });
+    await this.auditLog.record(userId, 'account', account.id, 'UPDATE', {
+      ...dto,
+    });
     return {
       ...account,
       balance: await this.computeBalance(account.id, account.initialBalance),
@@ -104,6 +114,9 @@ export class AccountsService {
     await this.prisma.account.update({
       where: { id },
       data: { isArchived: true },
+    });
+    await this.auditLog.record(userId, 'account', id, 'DELETE', {
+      isArchived: true,
     });
     return { success: true };
   }

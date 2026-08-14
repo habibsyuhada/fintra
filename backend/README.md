@@ -37,3 +37,15 @@ See `prisma/schema.prisma`. Generated client lives in `src/generated/prisma` (gi
 - `POST /api/receipts/:id/confirm` — turns a reviewed draft into a real `Transaction` (same validation as `POST /transactions`) and links it back to the receipt (`status` becomes `CONFIRMED`).
 - `POST /api/receipts/:id/reject` — discards the draft (`status` becomes `REJECTED`) without creating a transaction.
 - Images are stored on local disk under `uploads/receipts/` and served statically at `/uploads/receipts/...` (outside the `/api` prefix). Swap this for S3/object storage before running multiple backend replicas in production.
+
+## Production hardening
+
+- **Audit log**: every create/update/delete on accounts, categories, transactions, transfers, budgets and receipts is recorded in `audit_logs` (`userId`, `entity`, `entityId`, `action`, `changes`, `createdAt`). Read via `GET /api/audit-logs?entity=&entityId=`. Failures to write an audit entry are logged but never fail the underlying request.
+- **Soft-delete**: transactions are never hard-deleted (`isDeleted`/`deletedAt`), preserving history for audit/reporting even after "deletion".
+- **Rate limiting**: global `ThrottlerModule` (100 req/min/IP by default), tighter limits on `/auth/register` (5/min), `/auth/login` (10/min) and `/receipts/scan` (10/min, since it costs an AI call).
+- **Validation**: global `ValidationPipe` with `whitelist` + `forbidNonWhitelisted` — unknown/extra fields in request bodies are rejected outright.
+- **Structured logging**: `nestjs-pino` — JSON logs in production, pretty-printed in dev, silent in tests. `Authorization`/`Cookie`/`Set-Cookie` headers are redacted.
+- **Error tracking**: set `SENTRY_DSN` to report unhandled exceptions and 5xx `HttpException`s to Sentry (`src/common/filters/sentry-exception.filter.ts`); leave it empty to disable — nothing is sent anywhere in that case.
+- **Backups**: see `deploy/backup/backup-db.sh` / `deploy/README.md` for a cron-driven `pg_dump` + rotation setup.
+- **Sensitive data**: accounts store only a name/type/currency/balance — no raw card or bank account numbers are captured anywhere in the schema, so there's nothing that needs field-level encryption today. Revisit if that changes.
+- **CI/CD**: `.github/workflows/backend-ci.yml` runs lint, migrations, build, unit + e2e tests on every push/PR. `.github/workflows/deploy.yml` deploys to a VPS over SSH (disabled until `DEPLOY_ENABLED`/secrets are configured — see `deploy/README.md`).
