@@ -38,7 +38,7 @@ export default function CategoriesPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <h1 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Kategori</h1>
         <button
           onClick={() => setShowForm((v) => !v)}
