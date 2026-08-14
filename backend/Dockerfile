@@ -16,7 +16,7 @@ COPY --from=build /app/prisma ./prisma
 COPY --from=build /app/prisma.config.ts ./prisma.config.ts
 COPY --from=build /app/dist/generated ./dist/generated
 COPY docker-entrypoint.sh ./docker-entrypoint.sh
-RUN chmod +x ./docker-entrypoint.sh
+RUN chmod +x ./docker-entrypoint.sh && mkdir -p uploads/receipts
 
 EXPOSE 3000
 ENTRYPOINT ["./docker-entrypoint.sh"]

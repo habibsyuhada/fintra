@@ -30,3 +30,10 @@ API is served under `/api` (e.g. `GET /api/health`).
 ## Database schema
 
 See `prisma/schema.prisma`. Generated client lives in `src/generated/prisma` (gitignored, run `npx prisma generate`).
+
+## Scan struk (AI)
+
+- `POST /api/receipts/scan` — multipart upload (`file`), sends the image to an OpenRouter vision model server-side (`OPENROUTER_API_KEY`/`OPENROUTER_MODEL` in `.env`) and returns a `draft` (merchant/date/total/items/category_guess) for the user to review. The photo is always saved as a `Receipt` (status `PENDING`) even if `OPENROUTER_API_KEY` is unset or the AI call fails — the response includes an `error` message and the frontend falls back to manual entry.
+- `POST /api/receipts/:id/confirm` — turns a reviewed draft into a real `Transaction` (same validation as `POST /transactions`) and links it back to the receipt (`status` becomes `CONFIRMED`).
+- `POST /api/receipts/:id/reject` — discards the draft (`status` becomes `REJECTED`) without creating a transaction.
+- Images are stored on local disk under `uploads/receipts/` and served statically at `/uploads/receipts/...` (outside the `/api` prefix). Swap this for S3/object storage before running multiple backend replicas in production.

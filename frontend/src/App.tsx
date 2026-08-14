@@ -8,6 +8,7 @@ import CategoriesPage from './pages/CategoriesPage'
 import TransactionsPage from './pages/TransactionsPage'
 import BudgetsPage from './pages/BudgetsPage'
 import ReportsPage from './pages/ReportsPage'
+import ScanReceiptPage from './pages/ScanReceiptPage'
 
 export default function App() {
   return (
@@ -21,6 +22,7 @@ export default function App() {
         <Route path="/transactions" element={<TransactionsPage />} />
         <Route path="/budgets" element={<BudgetsPage />} />
         <Route path="/reports" element={<ReportsPage />} />
+        <Route path="/scan" element={<ScanReceiptPage />} />
       </Route>
     </Routes>
   )

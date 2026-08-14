@@ -62,6 +62,7 @@ model User {
   budgets        Budget[]
   refreshTokens  RefreshToken[]
   auditLogs      AuditLog[]
+  receipts       Receipt[]
 
   @@map("users")
 }
@@ -208,6 +209,7 @@ model Transfer {
 
 model Receipt {
   id             String        @id @default(uuid())
+  userId         String        @map("user_id")
   transactionId  String?       @unique @map("transaction_id")
   imageUrl       String        @map("image_url")
   rawAiResponse  Json?         @map("raw_ai_response")
@@ -215,8 +217,10 @@ model Receipt {
   createdAt      DateTime      @default(now()) @map("created_at")
   updatedAt      DateTime      @updatedAt @map("updated_at")
 
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   transaction Transaction? @relation(fields: [transactionId], references: [id], onDelete: SetNull)
 
+  @@index([userId])
   @@map("receipts")
 }
 

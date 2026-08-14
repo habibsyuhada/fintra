@@ -12,6 +12,7 @@ import { TransactionsModule } from './transactions/transactions.module';
 import { TransfersModule } from './transfers/transfers.module';
 import { BudgetsModule } from './budgets/budgets.module';
 import { ReportsModule } from './reports/reports.module';
+import { ReceiptsModule } from './receipts/receipts.module';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { ReportsModule } from './reports/reports.module';
     TransfersModule,
     BudgetsModule,
     ReportsModule,
+    ReceiptsModule,
   ],
   controllers: [HealthController],
   providers: [
