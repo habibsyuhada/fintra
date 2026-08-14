@@ -1,0 +1,68 @@
+name: Deploy frontend to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'frontend/**'
+      - '.github/workflows/deploy-gh-pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Only one deploy at a time; don't cancel one that's already live-deploying.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Build
+        working-directory: frontend
+        env:
+          # Repo project page is served from /<repo-name>/, not /.
+          VITE_BASE_PATH: /${{ github.event.repository.name }}/
+          # Unset by default: no backend deployed yet, so the site runs in
+          # Guest Mode only (fully functional, everything local — see
+          # frontend/README.md#mode-tamu-tanpa-akun). Once a backend exists,
+          # set the VITE_API_BASE_URL repository variable (Settings ->
+          # Secrets and variables -> Actions -> Variables) to its URL, e.g.
+          # https://api.example.com/api, and login/register/sync will work
+          # too — no workflow changes needed.
+          VITE_API_BASE_URL: ${{ vars.VITE_API_BASE_URL }}
+        run: npm run build
+
+      - name: Add SPA fallback (GitHub Pages has no server-side rewrite for client-side routes)
+        working-directory: frontend/dist
+        run: cp index.html 404.html
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: frontend/dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

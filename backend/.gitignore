@@ -1,0 +1,36 @@
+# compiled output
+/dist
+/coverage
+/node_modules
+
+# Prisma generated client
+/src/generated/prisma
+
+# Logs
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment variables
+.env
+.env.*.local
+
+# IDE
+.idea
+.vscode/*
+!.vscode/extensions.json
+
+# OS
+.DS_Store
+
+# Tests
+/coverage
+/.nyc_output
+
+# Prisma tsbuildinfo
+*.tsbuildinfo
+
+# Uploaded receipt images (local dev storage; use object storage in production)
+/uploads/receipts/*
+!/uploads/receipts/.gitkeep

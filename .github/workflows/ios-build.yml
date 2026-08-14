@@ -1,0 +1,50 @@
+name: iOS Build
+
+on:
+  workflow_dispatch:
+
+defaults:
+  run:
+    working-directory: frontend
+
+jobs:
+  build:
+    # GitHub-hosted macOS runners consume minutes much faster than Linux runners
+    # (10x multiplier on most plans) — this workflow is manual-trigger only.
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build web assets
+        run: npm run build
+
+      - name: Sync Capacitor
+        run: npx cap sync ios
+
+      - name: Install CocoaPods
+        working-directory: frontend/ios/App
+        run: pod install
+
+      # Building an .ipa requires a signing certificate + provisioning profile
+      # (APPLE_CERTIFICATE_BASE64, APPLE_CERTIFICATE_PASSWORD, APPLE_PROVISIONING_PROFILE_BASE64
+      # secrets) and an Apple Developer account — configure before enabling archive/export.
+      # - name: Build archive
+      #   working-directory: frontend/ios/App
+      #   run: |
+      #     xcodebuild -workspace App.xcworkspace -scheme App -configuration Release \
+      #       -archivePath build/App.xcarchive archive
+
+      - name: Build for simulator (verification only)
+        working-directory: frontend/ios/App
+        run: |
+          xcodebuild -workspace App.xcworkspace -scheme App -configuration Debug \
+            -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' build

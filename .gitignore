@@ -1,0 +1,12 @@
+node_modules/
+dist/
+coverage/
+.DS_Store
+*.log
+frontend/dist/
+
+# Prisma-generated AI assistant skill docs (not project code)
+backend/.agents/
+backend/.claude/
+backend/.windsurf/
+backend/skills-lock.json
