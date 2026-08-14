@@ -8,6 +8,7 @@ const NAV_ITEMS = [
   { to: '/', label: 'Dashboard', end: true },
   { to: '/transactions', label: 'Transaksi' },
   { to: '/scan', label: 'Scan Struk' },
+  { to: '/recurring', label: 'Tagihan' },
   { to: '/budgets', label: 'Budget' },
   { to: '/reports', label: 'Laporan' },
   { to: '/accounts', label: 'Akun' },

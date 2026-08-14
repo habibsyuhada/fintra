@@ -6,6 +6,7 @@ import { useAccounts } from '../api/accounts'
 import { useCategories } from '../api/categories'
 import { useCreateTransaction, useDeleteTransaction, useTransactions } from '../api/transactions'
 import { useCreateTransfer } from '../api/transfers'
+import { downloadTransactionsExport, type ExportFormat } from '../api/exports'
 import type { TransactionType } from '../lib/types'
 
 function formatMoney(amount: string) {
@@ -199,6 +200,16 @@ export default function TransactionsPage() {
   const [typeFilter, setTypeFilter] = useState<TransactionType | ''>('')
   const { data, isLoading } = useTransactions({ type: typeFilter || undefined })
   const deleteTransaction = useDeleteTransaction()
+  const [exporting, setExporting] = useState<ExportFormat | null>(null)
+
+  const handleExport = async (format: ExportFormat) => {
+    setExporting(format)
+    try {
+      await downloadTransactionsExport(format, { type: typeFilter || undefined })
+    } finally {
+      setExporting(null)
+    }
+  }
 
   return (
     <div>
@@ -217,6 +228,18 @@ export default function TransactionsPage() {
           >
             {showForm === 'transfer' ? 'Batal' : '+ Transfer'}
           </button>
+          <div className="flex gap-1">
+            {(['csv', 'xlsx', 'pdf'] as const).map((format) => (
+              <button
+                key={format}
+                onClick={() => void handleExport(format)}
+                disabled={exporting !== null}
+                className="rounded-md border border-gray-300 dark:border-gray-700 px-2 py-1.5 text-xs font-medium uppercase text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50"
+              >
+                {exporting === format ? '...' : format}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 

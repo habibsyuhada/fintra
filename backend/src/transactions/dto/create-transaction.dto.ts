@@ -45,4 +45,27 @@ export class CreateTransactionDto {
   @IsString()
   @IsOptional()
   attachmentUrl?: string;
+
+  /**
+   * Multi-currency snapshot: if the transaction was originally made in a
+   * currency other than the account's, record the original amount/currency
+   * and the exchange rate used to convert it into `amount` (account currency).
+   * Purely informational — balance calculations always use `amount`.
+   */
+  @Type(() => Number)
+  @IsNumber()
+  @IsPositive()
+  @IsOptional()
+  originalAmount?: number;
+
+  @IsString()
+  @MaxLength(10)
+  @IsOptional()
+  originalCurrency?: string;
+
+  @Type(() => Number)
+  @IsNumber()
+  @IsPositive()
+  @IsOptional()
+  exchangeRate?: number;
 }

@@ -50,6 +50,22 @@ export interface TransactionPage {
   totalPages: number
 }
 
+export type RecurringFrequency = 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'YEARLY'
+
+export interface RecurringRule {
+  id: string
+  accountId: string
+  categoryId: string | null
+  amount: string
+  type: TransactionType
+  note: string | null
+  frequency: RecurringFrequency
+  nextRunDate: string
+  isActive: boolean
+  account?: { id: string; name: string }
+  category?: Category | null
+}
+
 export interface Transfer {
   id: string
   fromAccountId: string

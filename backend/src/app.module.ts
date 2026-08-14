@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { ScheduleModule } from '@nestjs/schedule';
 import { LoggerModule } from 'nestjs-pino';
 import { validate } from './config/env.validation';
 import { PrismaModule } from './prisma/prisma.module';
@@ -15,6 +16,8 @@ import { BudgetsModule } from './budgets/budgets.module';
 import { ReportsModule } from './reports/reports.module';
 import { ReceiptsModule } from './receipts/receipts.module';
 import { AuditLogModule } from './audit-log/audit-log.module';
+import { RecurringRulesModule } from './recurring-rules/recurring-rules.module';
+import { ExportsModule } from './exports/exports.module';
 
 @Module({
   imports: [
@@ -25,6 +28,7 @@ import { AuditLogModule } from './audit-log/audit-log.module';
     ThrottlerModule.forRoot({
       throttlers: [{ ttl: 60_000, limit: 100 }],
     }),
+    ScheduleModule.forRoot(),
     LoggerModule.forRoot({
       pinoHttp: {
         level:
@@ -59,6 +63,8 @@ import { AuditLogModule } from './audit-log/audit-log.module';
     BudgetsModule,
     ReportsModule,
     ReceiptsModule,
+    RecurringRulesModule,
+    ExportsModule,
   ],
   controllers: [HealthController],
   providers: [

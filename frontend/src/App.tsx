@@ -9,6 +9,7 @@ import TransactionsPage from './pages/TransactionsPage'
 import BudgetsPage from './pages/BudgetsPage'
 import ReportsPage from './pages/ReportsPage'
 import ScanReceiptPage from './pages/ScanReceiptPage'
+import RecurringRulesPage from './pages/RecurringRulesPage'
 
 export default function App() {
   return (
@@ -23,6 +24,7 @@ export default function App() {
         <Route path="/budgets" element={<BudgetsPage />} />
         <Route path="/reports" element={<ReportsPage />} />
         <Route path="/scan" element={<ScanReceiptPage />} />
+        <Route path="/recurring" element={<RecurringRulesPage />} />
       </Route>
     </Routes>
   )

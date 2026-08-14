@@ -41,4 +41,14 @@ Web app: http://localhost:5173 (proxy `/api` dan `/uploads` ke backend di port 3
 
 ## Status implementasi
 
-Fase 1–6 dari `PLAN.md` sudah selesai: fondasi backend, core CRUD, laporan & budget, mobile app, AI scan struk, dan hardening (audit log, rate limiting, structured logging, Sentry, backup, CI/CD). Fase 7 (fitur lanjutan) sedang dikerjakan.
+Seluruh 7 fase di `PLAN.md` sudah selesai:
+
+1. **Fondasi** — backend NestJS + Prisma + PostgreSQL, auth JWT, Docker
+2. **Core CRUD** — akun, kategori, transaksi, transfer + frontend web
+3. **Laporan & Budget** — cashflow, breakdown kategori, tren, alert budget
+4. **Mobile app** — dibungkus Capacitor (Android + iOS)
+5. **AI scan struk** — via OpenRouter, draft wajib direview, fallback manual
+6. **Hardening** — audit log, rate limiting, structured logging, Sentry, backup, CI/CD
+7. **Fitur lanjutan** — recurring transaction (cron), multi-currency snapshot, export CSV/XLSX/PDF, notifikasi lokal (budget & tagihan)
+
+Yang **belum** bisa diverifikasi dari sandbox ini karena butuh kredensial/infra nyata: build APK/IPA sungguhan (perlu Android SDK / Xcode — sudah divalidasi lewat CI), deploy ke VPS asli, dan panggilan AI dengan `OPENROUTER_API_KEY` sungguhan (jalur kode sudah diuji lewat unit test dengan fetch di-mock).

@@ -49,3 +49,10 @@ See `prisma/schema.prisma`. Generated client lives in `src/generated/prisma` (gi
 - **Backups**: see `deploy/backup/backup-db.sh` / `deploy/README.md` for a cron-driven `pg_dump` + rotation setup.
 - **Sensitive data**: accounts store only a name/type/currency/balance — no raw card or bank account numbers are captured anywhere in the schema, so there's nothing that needs field-level encryption today. Revisit if that changes.
 - **CI/CD**: `.github/workflows/backend-ci.yml` runs lint, migrations, build, unit + e2e tests on every push/PR. `.github/workflows/deploy.yml` deploys to a VPS over SSH (disabled until `DEPLOY_ENABLED`/secrets are configured — see `deploy/README.md`).
+
+## Fitur lanjutan
+
+- **Recurring transactions**: `POST/GET/PATCH/DELETE /api/recurring-rules` manage rules (account, category, amount, frequency, `nextRunDate`). An hourly cron (`@nestjs/schedule`, `RecurringRulesCron`) finds every active rule whose `nextRunDate` has passed, creates the corresponding `Transaction` (`isRecurringInstance: true`), and advances `nextRunDate` — catching up multiple missed periods (capped at 60) if the server was down. Covered by `test/recurring-rules.e2e-spec.ts`.
+- **Multi-currency**: `POST /api/transactions` accepts optional `originalAmount`/`originalCurrency`/`exchangeRate`. `amount` always stays in the account's own currency (balance math is unaffected); the original fields are stored purely as an audit/display snapshot of what was actually paid.
+- **Export**: `GET /api/exports/transactions?format=csv|xlsx|pdf` (same filters as `GET /transactions`) streams a CSV, XLSX (`exceljs`) or PDF (`pdfkit`) file.
+- **Push notifications**: not a backend concern — the frontend schedules local notifications (Capacitor `@capacitor/local-notifications`, native platforms only) when a budget crosses 80%/100% or a recurring bill is due within 3 days, using data already exposed by the endpoints above.

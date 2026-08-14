@@ -67,6 +67,9 @@ export class TransactionsService {
         date: new Date(dto.date),
         tags: dto.tags ?? [],
         attachmentUrl: dto.attachmentUrl,
+        originalAmount: dto.originalAmount,
+        originalCurrency: dto.originalCurrency,
+        exchangeRate: dto.exchangeRate,
       },
     });
     await this.auditLog.record(

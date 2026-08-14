@@ -134,6 +134,8 @@ model Transaction {
   tags                String[]        @default([])
   isRecurringInstance Boolean         @default(false) @map("is_recurring_instance")
   recurringRuleId     String?         @map("recurring_rule_id")
+  originalAmount      Decimal?        @map("original_amount") @db.Decimal(18, 2)
+  originalCurrency    String?         @map("original_currency")
   exchangeRate        Decimal?        @map("exchange_rate") @db.Decimal(18, 6)
   isDeleted           Boolean         @default(false) @map("is_deleted")
   deletedAt           DateTime?       @map("deleted_at")

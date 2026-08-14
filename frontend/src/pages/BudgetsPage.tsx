@@ -1,9 +1,10 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useBudgets, useCreateBudget, useDeleteBudget } from '../api/budgets'
 import { useCategories } from '../api/categories'
+import { notifyBudgetAlerts } from '../lib/notifications'
 
 function formatMoney(amount: number) {
   return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(
@@ -33,6 +34,10 @@ export default function BudgetsPage() {
   const createBudget = useCreateBudget()
   const deleteBudget = useDeleteBudget()
   const [showForm, setShowForm] = useState(false)
+
+  useEffect(() => {
+    if (budgets) void notifyBudgetAlerts(budgets)
+  }, [budgets])
 
   const {
     register,
