@@ -45,6 +45,8 @@ Bisa juga dipakai **tanpa registrasi/login sama sekali** ("Lanjutkan tanpa akun"
 
 `docker-compose.yml` di root menjalankan Postgres, Redis, backend, dan Nginx (SSL via Let's Encrypt, config di `deploy/nginx/nginx.conf`). Lihat [`deploy/README.md`](./deploy/README.md) untuk panduan lengkap (setup VPS, backup terjadwal, CI/CD, environment dev/staging/prod, monitoring).
 
+Alternatif tanpa VPS: frontend saja bisa di-deploy gratis ke **GitHub Pages** lewat `.github/workflows/deploy-gh-pages.yml` — jalan penuh dalam Mode Tamu tanpa backend sama sekali, dan bisa disambungkan ke backend online kapan saja lewat repository variable. Lihat [`frontend/README.md`](./frontend/README.md#deploy-ke-github-pages).
+
 ## Status implementasi
 
 Seluruh 7 fase di `PLAN.md` sudah selesai:

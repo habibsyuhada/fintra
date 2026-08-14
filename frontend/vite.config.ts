@@ -4,6 +4,10 @@ import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
 
 export default defineConfig({
+  // Root path for VPS/local deploys. Overridden to '/<repo>/' for the
+  // GitHub Pages workflow (project pages are served from a subpath), via
+  // the VITE_BASE_PATH env var — see .github/workflows/deploy-gh-pages.yml.
+  base: process.env.VITE_BASE_PATH || '/',
   plugins: [
     react(),
     tailwindcss(),
@@ -22,7 +26,10 @@ export default defineConfig({
         name: 'Fintra',
         short_name: 'Fintra',
         description: 'Aplikasi rekap keuangan pribadi',
-        start_url: '/',
+        // Relative to the manifest's own location, so it resolves correctly
+        // under any base path (root deploy or a GitHub Pages subpath).
+        start_url: '.',
+        scope: '.',
         display: 'standalone',
         background_color: '#ffffff',
         theme_color: '#4f46e5',

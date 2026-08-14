@@ -45,6 +45,17 @@ Saat tamu akhirnya Daftar/Masuk, `src/lib/guest-migration.ts` otomatis memindahk
 
 Diuji end-to-end: buat data sebagai tamu -> reload (tetap tamu, data persis) -> daftar akun baru -> banner "N data dari mode tamu berhasil digabungkan" -> data tadi muncul di akun baru -> tersinkron ke server dengan id asli.
 
+## Deploy ke GitHub Pages
+
+Workflow `.github/workflows/deploy-gh-pages.yml` otomatis build & deploy frontend sebagai static site ke GitHub Pages tiap push ke `main` yang menyentuh folder `frontend/` (atau lewat trigger manual "Run workflow").
+
+- **Base path**: GitHub Pages project page disajikan dari `/<nama-repo>/`, bukan `/`. Workflow set `VITE_BASE_PATH=/<nama-repo>/` saat build; `vite.config.ts` membaca env ini (default `/` untuk deploy VPS/lokal). `main.tsx` (React Router `basename`) dan manifest PWA (`start_url`/`scope` relatif) ikut menyesuaikan otomatis.
+- **Routing SPA**: GitHub Pages tidak punya server-side rewrite, jadi deep link (mis. reload langsung di `/transactions`) akan 404 tanpa trik. Workflow meng-copy `index.html` jadi `404.html` di hasil build — GitHub Pages menyajikan `404.html` untuk path yang tidak ditemukan, dan karena isinya sama dengan `index.html`, React Router yang mengambil alih render halaman yang benar di client.
+- **Tanpa backend (mode tamu)**: kalau repository variable `VITE_API_BASE_URL` (Settings -> Secrets and variables -> Actions -> Variables) belum di-set, build tetap jalan penuh dalam Mode Tamu — semua fitur inti (akun, kategori, transaksi, transfer, budget, tagihan berulang, dashboard, laporan) berfungsi 100% lokal tanpa backend sama sekali (lihat bagian "Offline support" & "Mode Tamu" di atas). Fitur online-only (scan struk, export, audit log) akan menampilkan pesan "tidak ada koneksi/backend" alih-alih gagal diam-diam.
+- **Menyambungkan backend nanti**: begitu backend online tersedia, set repository variable `VITE_API_BASE_URL` ke URL API-nya (mis. `https://api.example.com/api`) lalu re-run workflow — tidak perlu ubah kode maupun workflow file.
+
+**Langkah manual satu kali** (tidak bisa diotomasi lewat workflow file): di repo GitHub, buka **Settings -> Pages -> Source**, pilih **"GitHub Actions"**. Setelah itu tiap push ke `main` (yang menyentuh `frontend/`) otomatis deploy.
+
 ## Mobile (Capacitor)
 
 SPA yang sama di-wrap jadi Android/iOS app via Capacitor (`capacitor.config.ts`, appId `com.fintra.app`). Plugin terpasang: `@capacitor/camera`, `@capacitor/local-notifications`, `@capacitor/preferences`, `@capacitor/app`.

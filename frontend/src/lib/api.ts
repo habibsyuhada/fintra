@@ -1,8 +1,16 @@
 import axios, { AxiosError, isAxiosError, type InternalAxiosRequestConfig } from 'axios'
 import { useAuthStore } from './auth-store'
 
+// Same-origin `/api` by default (VPS deploy: Nginx proxies /api to the
+// backend on the same domain). Override at build time with
+// VITE_API_BASE_URL when the frontend is hosted separately from the
+// backend (e.g. a static GitHub Pages deploy) — leave unset to run
+// frontend-only / guest-mode-only, since every request will simply fail
+// as a network error and the app already handles that gracefully.
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api'
+
 export const api = axios.create({
-  baseURL: '/api',
+  baseURL: API_BASE_URL,
   withCredentials: true,
 })
 
@@ -18,7 +26,7 @@ let refreshPromise: Promise<string> | null = null
 
 async function refreshAccessToken(): Promise<string> {
   const { data } = await axios.post<{ accessToken: string; user: AuthUserResponse }>(
-    '/api/auth/refresh',
+    `${API_BASE_URL}/auth/refresh`,
     {},
     { withCredentials: true },
   )
@@ -59,7 +67,7 @@ api.interceptors.response.use(
         // keep working, and let the app retry later.
         if (isAxiosError(refreshError) && refreshError.response) {
           useAuthStore.getState().clear()
-          window.location.href = '/login'
+          window.location.href = `${import.meta.env.BASE_URL}login`
         }
         return Promise.reject(error)
       }

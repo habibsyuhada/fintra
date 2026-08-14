@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
-import axios, { isAxiosError } from 'axios'
+import { isAxiosError } from 'axios'
+import { api } from './api'
 import { getCachedUser, useAuthStore, wasGuestMode } from './auth-store'
 import { useNetworkStatusEffect, useNetworkStore } from './network-status'
 import { getDb } from './db'
@@ -29,8 +30,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let cancelled = false
-    axios
-      .post('/api/auth/refresh', {}, { withCredentials: true })
+    api
+      .post('/auth/refresh', {})
       .then(({ data }) => {
         if (!cancelled) {
           setAuth(data.user, data.accessToken)
