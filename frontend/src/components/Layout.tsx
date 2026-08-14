@@ -6,6 +6,7 @@ import { useAuthReady } from '../lib/auth-provider'
 import { useOnlineStatus } from '../lib/network-status'
 import { getDb } from '../lib/db'
 import { useLogout } from '../api/auth'
+import { useT, type TranslationKey } from '../lib/i18n'
 import clsx from 'clsx'
 import { Spinner } from './ui/Spinner'
 import {
@@ -17,6 +18,7 @@ import {
   ChartPieIcon,
   WalletIcon,
   TagIcon,
+  SettingsIcon,
   LogoutIcon,
   MenuIcon,
   CloseIcon,
@@ -25,15 +27,16 @@ import {
   CheckCircleIcon,
 } from './ui/icons'
 
-const NAV_ITEMS = [
-  { to: '/', label: 'Dashboard', end: true, icon: HomeIcon },
-  { to: '/transactions', label: 'Transaksi', icon: ReceiptListIcon },
-  { to: '/scan', label: 'Scan Struk', icon: CameraIcon },
-  { to: '/recurring', label: 'Tagihan', icon: RepeatIcon },
-  { to: '/budgets', label: 'Budget', icon: PiggyIcon },
-  { to: '/reports', label: 'Laporan', icon: ChartPieIcon },
-  { to: '/accounts', label: 'Akun', icon: WalletIcon },
-  { to: '/categories', label: 'Kategori', icon: TagIcon },
+const NAV_ITEMS: { to: string; labelKey: TranslationKey; end?: boolean; icon: typeof HomeIcon }[] = [
+  { to: '/', labelKey: 'nav.dashboard', end: true, icon: HomeIcon },
+  { to: '/transactions', labelKey: 'nav.transactions', icon: ReceiptListIcon },
+  { to: '/scan', labelKey: 'nav.scan', icon: CameraIcon },
+  { to: '/recurring', labelKey: 'nav.recurring', icon: RepeatIcon },
+  { to: '/budgets', labelKey: 'nav.budgets', icon: PiggyIcon },
+  { to: '/reports', labelKey: 'nav.reports', icon: ChartPieIcon },
+  { to: '/accounts', labelKey: 'nav.accounts', icon: WalletIcon },
+  { to: '/categories', labelKey: 'nav.categories', icon: TagIcon },
+  { to: '/settings', labelKey: 'nav.settings', icon: SettingsIcon },
 ]
 
 const GUEST_BANNER_DISMISSED_KEY = 'fintra-guest-banner-dismissed'
@@ -41,11 +44,12 @@ const GUEST_BANNER_DISMISSED_KEY = 'fintra-guest-banner-dismissed'
 function SyncStatus({ userId }: { userId: string }) {
   const online = useOnlineStatus()
   const pending = useLiveQuery(() => getDb(userId).syncQueue.count(), [userId])
+  const t = useT()
 
   if (online && !pending) {
     return (
       <span className="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-600 dark:text-emerald-400">
-        <CheckCircleIcon className="h-3.5 w-3.5" /> Tersinkron
+        <CheckCircleIcon className="h-3.5 w-3.5" /> {t('layout.synced')}
       </span>
     )
   }
@@ -58,8 +62,8 @@ function SyncStatus({ userId }: { userId: string }) {
       )}
     >
       {online ? <RefreshIcon className="h-3.5 w-3.5 animate-spin" /> : <WifiOffIcon className="h-3.5 w-3.5" />}
-      {online ? 'Menyinkronkan' : 'Offline'}
-      {pending ? ` (${pending} tertunda)` : ''}
+      {online ? t('layout.syncing') : t('layout.offline')}
+      {pending ? ` (${pending} ${t('layout.pending')})` : ''}
     </span>
   )
 }
@@ -84,6 +88,8 @@ function MobileMenuOverlay({
   isGuest: boolean
   onLogout: () => void
 }) {
+  const t = useT()
+
   useEffect(() => {
     const prevOverflow = document.body.style.overflow
     document.body.style.overflow = 'hidden'
@@ -111,7 +117,7 @@ function MobileMenuOverlay({
         </div>
         <button
           onClick={onClose}
-          aria-label="Tutup menu"
+          aria-label={t('layout.closeMenu')}
           className="inline-flex items-center justify-center rounded-lg p-2 text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
         >
           <CloseIcon className="h-6 w-6" />
@@ -123,7 +129,7 @@ function MobileMenuOverlay({
           {NAV_ITEMS.map((item) => (
             <NavLink key={item.to} to={item.to} end={item.end} className={navLinkClass} onClick={onClose}>
               <item.icon className="h-5 w-5 shrink-0" />
-              {item.label}
+              {t(item.labelKey)}
             </NavLink>
           ))}
         </div>
@@ -135,8 +141,10 @@ function MobileMenuOverlay({
             {initials(user.name)}
           </div>
           <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-medium text-slate-800 dark:text-slate-200">{user.name}</p>
-            {isGuest ? <span className="text-xs text-slate-500">Mode Tamu</span> : <SyncStatus userId={user.id} />}
+            <p className="truncate text-sm font-medium text-slate-800 dark:text-slate-200">
+              {isGuest ? t('layout.guestName') : user.name}
+            </p>
+            {isGuest ? <span className="text-xs text-slate-500">{t('layout.guestMode')}</span> : <SyncStatus userId={user.id} />}
           </div>
         </div>
         <button
@@ -144,7 +152,7 @@ function MobileMenuOverlay({
           className="flex w-full items-center justify-center gap-2 rounded-xl bg-rose-50 px-4 py-3 text-sm font-medium text-rose-600 hover:bg-rose-100 dark:bg-rose-950 dark:hover:bg-rose-900/60"
         >
           <LogoutIcon className="h-4 w-4" />
-          {isGuest ? 'Keluar mode tamu' : 'Keluar'}
+          {isGuest ? t('layout.logoutGuest') : t('layout.logout')}
         </button>
       </div>
     </div>
@@ -161,6 +169,7 @@ export default function Layout() {
     () => typeof window !== 'undefined' && localStorage.getItem(GUEST_BANNER_DISMISSED_KEY) === '1',
   )
   const location = useLocation()
+  const t = useT()
 
   useEffect(() => {
     setMenuOpen(false)
@@ -169,7 +178,7 @@ export default function Layout() {
   if (!ready) {
     return (
       <div className="flex min-h-svh items-center justify-center gap-2 bg-slate-50 text-slate-500 dark:bg-slate-950">
-        <Spinner className="h-5 w-5" /> Memuat...
+        <Spinner className="h-5 w-5" /> {t('layout.loading')}
       </div>
     )
   }
@@ -198,15 +207,15 @@ export default function Layout() {
       {isGuest && !guestBannerDismissed && (
         <div className="flex items-center justify-center gap-2 bg-amber-50 px-4 py-2 text-center text-xs text-amber-800 dark:bg-amber-950 dark:text-amber-400">
           <p className="flex-1">
-            Mode Tamu — data hanya tersimpan di perangkat ini.{' '}
+            {t('layout.guestBanner')}{' '}
             <Link to="/login" className="font-semibold underline underline-offset-2">
-              Daftar/Masuk
+              {t('layout.guestBannerLink')}
             </Link>{' '}
-            untuk menyinkronkannya ke akun.
+            {t('layout.guestBannerSuffix')}
           </p>
           <button
             onClick={dismissGuestBanner}
-            aria-label="Tutup pemberitahuan"
+            aria-label={t('layout.dismissBanner')}
             className="shrink-0 rounded-md p-1 text-amber-700 hover:bg-amber-100 dark:text-amber-400 dark:hover:bg-amber-900/50"
           >
             <CloseIcon className="h-3.5 w-3.5" />
@@ -227,7 +236,7 @@ export default function Layout() {
             {NAV_ITEMS.map((item) => (
               <NavLink key={item.to} to={item.to} end={item.end} className={navLinkClass}>
                 <item.icon className="h-[18px] w-[18px] shrink-0" />
-                {item.label}
+                {t(item.labelKey)}
               </NavLink>
             ))}
           </nav>
@@ -237,17 +246,19 @@ export default function Layout() {
                 {initials(user.name)}
               </div>
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium text-slate-800 dark:text-slate-200">{user.name}</p>
+                <p className="truncate text-sm font-medium text-slate-800 dark:text-slate-200">
+                  {isGuest ? t('layout.guestName') : user.name}
+                </p>
                 {isGuest ? (
-                  <span className="text-xs text-slate-500">Mode Tamu</span>
+                  <span className="text-xs text-slate-500">{t('layout.guestMode')}</span>
                 ) : (
                   <SyncStatus userId={user.id} />
                 )}
               </div>
               <button
                 onClick={() => logout.mutate()}
-                aria-label={isGuest ? 'Keluar mode tamu' : 'Keluar'}
-                title={isGuest ? 'Keluar mode tamu' : 'Keluar'}
+                aria-label={isGuest ? t('layout.logoutGuest') : t('layout.logout')}
+                title={isGuest ? t('layout.logoutGuest') : t('layout.logout')}
                 className="rounded-md p-2 text-slate-400 transition-colors hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950"
               >
                 <LogoutIcon className="h-4 w-4" />
@@ -265,12 +276,12 @@ export default function Layout() {
                   F
                 </div>
                 <span className="font-display text-base font-bold text-slate-900 dark:text-slate-100">
-                  {activePage?.label ?? 'Fintra'}
+                  {activePage ? t(activePage.labelKey) : 'Fintra'}
                 </span>
               </div>
               <button
                 onClick={() => setMenuOpen(true)}
-                aria-label="Buka menu"
+                aria-label={t('layout.openMenu')}
                 aria-expanded={menuOpen}
                 className="inline-flex items-center justify-center rounded-lg p-2 text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
               >
@@ -302,7 +313,7 @@ export default function Layout() {
             }
           >
             <item.icon className="h-5 w-5" />
-            {item.label}
+            {t(item.labelKey)}
           </NavLink>
         ))}
       </nav>

@@ -1,13 +1,16 @@
 import type { ReactNode } from 'react'
 import { WalletIcon, ChartPieIcon, RepeatIcon, SparklesIcon } from './ui/icons'
+import { useT, type TranslationKey } from '../lib/i18n'
 
-const FEATURES = [
-  { icon: WalletIcon, text: 'Kelola semua akun & saldo dalam satu tempat' },
-  { icon: ChartPieIcon, text: 'Laporan & tren pengeluaran otomatis' },
-  { icon: RepeatIcon, text: 'Pengingat tagihan berulang, tanpa telat' },
+const FEATURES: { icon: typeof WalletIcon; textKey: TranslationKey }[] = [
+  { icon: WalletIcon, textKey: 'auth.heroFeature1' },
+  { icon: ChartPieIcon, textKey: 'auth.heroFeature2' },
+  { icon: RepeatIcon, textKey: 'auth.heroFeature3' },
 ]
 
 export function AuthShell({ children }: { children: ReactNode }) {
+  const t = useT()
+
   return (
     <div className="flex min-h-svh bg-slate-50 dark:bg-slate-950">
       <div className="relative hidden w-1/2 flex-col justify-between overflow-hidden bg-gradient-to-br from-indigo-600 via-indigo-700 to-violet-800 p-10 text-white lg:flex">
@@ -25,20 +28,15 @@ export function AuthShell({ children }: { children: ReactNode }) {
 
         <div className="relative">
           <SparklesIcon className="h-8 w-8 text-indigo-200" />
-          <h2 className="mt-5 font-display text-3xl font-bold leading-tight tracking-tight">
-            Rekap keuanganmu, jadi lebih jernih.
-          </h2>
-          <p className="mt-3 max-w-sm text-sm text-indigo-100">
-            Catat transaksi, pantau budget, dan lihat ke mana uangmu pergi — semua dalam satu aplikasi ringan yang tetap
-            jalan walau offline.
-          </p>
+          <h2 className="mt-5 font-display text-3xl font-bold leading-tight tracking-tight">{t('auth.heroHeadline')}</h2>
+          <p className="mt-3 max-w-sm text-sm text-indigo-100">{t('auth.heroSubtext')}</p>
           <ul className="mt-8 space-y-3">
             {FEATURES.map((f) => (
-              <li key={f.text} className="flex items-center gap-3 text-sm text-indigo-50">
+              <li key={f.textKey} className="flex items-center gap-3 text-sm text-indigo-50">
                 <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/10">
                   <f.icon className="h-4 w-4" />
                 </span>
-                {f.text}
+                {t(f.textKey)}
               </li>
             ))}
           </ul>

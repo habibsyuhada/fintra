@@ -4,6 +4,7 @@ import { z } from 'zod'
 import { Link, useNavigate } from 'react-router-dom'
 import { useRegister } from '../api/auth'
 import { useAuthStore } from '../lib/auth-store'
+import { useT } from '../lib/i18n'
 import { isAxiosError } from 'axios'
 import { Input } from '../components/ui/Field'
 import { Button } from '../components/ui/Button'
@@ -24,6 +25,7 @@ export default function RegisterPage() {
   const navigate = useNavigate()
   const registerUser = useRegister()
   const continueAsGuest = useAuthStore((s) => s.continueAsGuest)
+  const t = useT()
   const {
     register,
     handleSubmit,
@@ -39,27 +41,27 @@ export default function RegisterPage() {
 
   return (
     <AuthShell>
-      <h1 className="font-display text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">Buat akun Fintra</h1>
-      <p className="mt-1.5 text-sm text-slate-500 dark:text-slate-400">Gratis, dan datamu tersinkron di semua perangkat.</p>
+      <h1 className="font-display text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">{t('auth.registerTitle')}</h1>
+      <p className="mt-1.5 text-sm text-slate-500 dark:text-slate-400">{t('auth.registerSubtitle')}</p>
       <form onSubmit={onSubmit} className="mt-6 space-y-4">
-        <Input label="Nama" placeholder="Nama lengkap" {...register('name')} error={errors.name?.message} />
-        <Input label="Email" type="email" placeholder="kamu@email.com" {...register('email')} error={errors.email?.message} />
-        <Input label="Password" type="password" placeholder="••••••••" {...register('password')} error={errors.password?.message} />
+        <Input label={t('auth.name')} placeholder={t('auth.namePlaceholder')} {...register('name')} error={errors.name?.message} />
+        <Input label={t('auth.email')} type="email" placeholder="kamu@email.com" {...register('email')} error={errors.email?.message} />
+        <Input label={t('auth.password')} type="password" placeholder="••••••••" {...register('password')} error={errors.password?.message} />
         {registerUser.isError && (
           <p className="rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-600 dark:bg-rose-950 dark:text-rose-400">
             {isAxiosError(registerUser.error) && registerUser.error.response?.data?.message
               ? String(registerUser.error.response.data.message)
-              : 'Registrasi gagal'}
+              : t('auth.registerFailed')}
           </p>
         )}
         <Button type="submit" loading={registerUser.isPending} className="w-full">
-          {registerUser.isPending ? 'Memproses...' : 'Daftar'}
+          {registerUser.isPending ? t('auth.registerButtonLoading') : t('auth.registerButton')}
         </Button>
       </form>
       <p className="mt-5 text-center text-sm text-slate-600 dark:text-slate-400">
-        Sudah punya akun?{' '}
+        {t('auth.haveAccount')}{' '}
         <Link to="/login" className="font-medium text-indigo-600 hover:underline dark:text-indigo-400">
-          Masuk
+          {t('auth.loginLink')}
         </Link>
       </p>
       <div className="mt-5 border-t border-slate-100 pt-5 text-center dark:border-slate-800">
@@ -70,9 +72,9 @@ export default function RegisterPage() {
           }}
           className="text-sm font-medium text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
         >
-          Lanjutkan tanpa akun →
+          {t('auth.continueAsGuest')}
         </button>
-        <p className="mt-1.5 text-xs text-slate-400 dark:text-slate-600">Data tersimpan di perangkat ini saja, tidak tersinkron ke cloud.</p>
+        <p className="mt-1.5 text-xs text-slate-400 dark:text-slate-600">{t('auth.guestNote')}</p>
       </div>
     </AuthShell>
   )

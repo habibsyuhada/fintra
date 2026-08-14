@@ -7,6 +7,15 @@
     <meta name="theme-color" content="#4f46e5" />
     <meta name="description" content="Fintra — aplikasi rekap keuangan pribadi" />
     <title>Fintra</title>
+    <script>
+      // Applied before React mounts so the picked theme renders on first
+      // paint instead of flashing the default light theme.
+      (function () {
+        var validThemes = ['light', 'dark', 'dim', 'flat', 'cat']
+        var theme = localStorage.getItem('fintra-theme')
+        document.documentElement.setAttribute('data-theme', validThemes.indexOf(theme) !== -1 ? theme : 'light')
+      })()
+    </script>
   </head>
   <body>
     <div id="root"></div>

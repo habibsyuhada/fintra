@@ -4,6 +4,7 @@ import { z } from 'zod'
 import { Link, useNavigate } from 'react-router-dom'
 import { useLogin } from '../api/auth'
 import { useAuthStore } from '../lib/auth-store'
+import { useT } from '../lib/i18n'
 import { isAxiosError } from 'axios'
 import { Input } from '../components/ui/Field'
 import { Button } from '../components/ui/Button'
@@ -20,6 +21,7 @@ export default function LoginPage() {
   const navigate = useNavigate()
   const login = useLogin()
   const continueAsGuest = useAuthStore((s) => s.continueAsGuest)
+  const t = useT()
   const {
     register,
     handleSubmit,
@@ -35,26 +37,26 @@ export default function LoginPage() {
 
   return (
     <AuthShell>
-      <h1 className="font-display text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">Selamat datang kembali</h1>
-      <p className="mt-1.5 text-sm text-slate-500 dark:text-slate-400">Masuk untuk melanjutkan mengelola keuanganmu.</p>
+      <h1 className="font-display text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">{t('auth.loginTitle')}</h1>
+      <p className="mt-1.5 text-sm text-slate-500 dark:text-slate-400">{t('auth.loginSubtitle')}</p>
       <form onSubmit={onSubmit} className="mt-6 space-y-4">
-        <Input label="Email" type="email" placeholder="kamu@email.com" {...register('email')} error={errors.email?.message} />
-        <Input label="Password" type="password" placeholder="••••••••" {...register('password')} error={errors.password?.message} />
+        <Input label={t('auth.email')} type="email" placeholder="kamu@email.com" {...register('email')} error={errors.email?.message} />
+        <Input label={t('auth.password')} type="password" placeholder="••••••••" {...register('password')} error={errors.password?.message} />
         {login.isError && (
           <p className="rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-600 dark:bg-rose-950 dark:text-rose-400">
             {isAxiosError(login.error) && login.error.response?.data?.message
               ? String(login.error.response.data.message)
-              : 'Login gagal'}
+              : t('auth.loginFailed')}
           </p>
         )}
         <Button type="submit" loading={login.isPending} className="w-full">
-          {login.isPending ? 'Memproses...' : 'Masuk'}
+          {login.isPending ? t('auth.loginButtonLoading') : t('auth.loginButton')}
         </Button>
       </form>
       <p className="mt-5 text-center text-sm text-slate-600 dark:text-slate-400">
-        Belum punya akun?{' '}
+        {t('auth.noAccount')}{' '}
         <Link to="/register" className="font-medium text-indigo-600 hover:underline dark:text-indigo-400">
-          Daftar
+          {t('auth.registerLink')}
         </Link>
       </p>
       <div className="mt-5 border-t border-slate-100 pt-5 text-center dark:border-slate-800">
@@ -65,9 +67,9 @@ export default function LoginPage() {
           }}
           className="text-sm font-medium text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
         >
-          Lanjutkan tanpa akun →
+          {t('auth.continueAsGuest')}
         </button>
-        <p className="mt-1.5 text-xs text-slate-400 dark:text-slate-600">Data tersimpan di perangkat ini saja, tidak tersinkron ke cloud.</p>
+        <p className="mt-1.5 text-xs text-slate-400 dark:text-slate-600">{t('auth.guestNote')}</p>
       </div>
     </AuthShell>
   )
