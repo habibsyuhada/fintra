@@ -3,6 +3,13 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useCategories, useCreateCategory, useDeleteCategory } from '../api/categories'
+import { PageHeader } from '../components/ui/PageHeader'
+import { Card, CardHeader } from '../components/ui/Card'
+import { Button } from '../components/ui/Button'
+import { Input, Select } from '../components/ui/Field'
+import { EmptyState } from '../components/ui/EmptyState'
+import { LoadingRows } from '../components/ui/Spinner'
+import { PlusIcon, TagIcon, TrashIcon } from '../components/ui/icons'
 
 const schema = z.object({
   name: z.string().min(1, 'Nama wajib diisi'),
@@ -37,79 +44,73 @@ export default function CategoriesPage() {
   const topLevel = categories?.filter((c) => !c.parentId) ?? []
 
   return (
-    <div>
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <h1 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Kategori</h1>
-        <button
-          onClick={() => setShowForm((v) => !v)}
-          className="rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-indigo-500"
-        >
-          {showForm ? 'Batal' : '+ Tambah Kategori'}
-        </button>
-      </div>
+    <div className="space-y-4">
+      <PageHeader
+        title="Kategori"
+        description="Kelompokkan transaksi agar laporan lebih rapi."
+        actions={
+          <Button icon={<PlusIcon className="h-4 w-4" />} onClick={() => setShowForm((v) => !v)} variant={showForm ? 'secondary' : 'primary'}>
+            {showForm ? 'Batal' : 'Tambah Kategori'}
+          </Button>
+        }
+      />
 
       {showForm && (
-        <form onSubmit={onSubmit} className="mt-4 grid grid-cols-1 gap-3 rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-4 sm:grid-cols-4">
-          <div>
-            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300">Nama</label>
-            <input {...register('name')} className="mt-1 w-full rounded-md border border-gray-300 dark:border-gray-700 bg-transparent px-2 py-1.5 text-sm" />
-            {errors.name && <p className="mt-1 text-xs text-red-600">{errors.name.message}</p>}
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300">Tipe</label>
-            <select {...register('type')} className="mt-1 w-full rounded-md border border-gray-300 dark:border-gray-700 bg-transparent px-2 py-1.5 text-sm">
+        <Card className="animate-fade-in p-5">
+          <form onSubmit={onSubmit} className="grid grid-cols-1 gap-3 sm:grid-cols-4">
+            <Input label="Nama" {...register('name')} error={errors.name?.message} />
+            <Select label="Tipe" {...register('type')}>
               <option value="EXPENSE">Pengeluaran</option>
               <option value="INCOME">Pemasukan</option>
-            </select>
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300">Warna</label>
-            <input type="color" {...register('color')} className="mt-1 h-9 w-full rounded-md border border-gray-300 dark:border-gray-700 bg-transparent px-2 py-1" />
-          </div>
-          <div className="flex items-end">
-            <button
-              type="submit"
-              disabled={createCategory.isPending}
-              className="w-full rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-indigo-500 disabled:opacity-50"
-            >
-              Simpan
-            </button>
-          </div>
-        </form>
+            </Select>
+            <div>
+              <label className="block text-xs font-medium text-slate-600 dark:text-slate-400">Warna</label>
+              <input type="color" {...register('color')} className="mt-1.5 h-9 w-full cursor-pointer rounded-lg border border-slate-300 bg-white px-1 py-1 dark:border-slate-700 dark:bg-slate-800/60" />
+            </div>
+            <div className="flex items-end">
+              <Button type="submit" loading={createCategory.isPending} className="w-full">
+                Simpan
+              </Button>
+            </div>
+          </form>
+        </Card>
       )}
 
-      <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         {['EXPENSE', 'INCOME'].map((type) => (
-          <div key={type} className="rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
-            <h2 className="border-b border-gray-100 dark:border-gray-800 px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-300">
-              {type === 'EXPENSE' ? 'Pengeluaran' : 'Pemasukan'}
-            </h2>
+          <Card key={type} className="overflow-hidden">
+            <CardHeader title={type === 'EXPENSE' ? 'Pengeluaran' : 'Pemasukan'} />
             {isLoading ? (
-              <p className="p-4 text-sm text-gray-500">Memuat...</p>
-            ) : (
-              <ul className="divide-y divide-gray-100 dark:divide-gray-800">
+              <LoadingRows rows={2} />
+            ) : topLevel.filter((c) => c.type === type).length > 0 ? (
+              <ul className="divide-y divide-slate-100 dark:divide-slate-800">
                 {topLevel
                   .filter((c) => c.type === type)
                   .map((c) => (
-                    <li key={c.id} className="flex items-center justify-between px-4 py-2 text-sm">
-                      <span className="flex items-center gap-2 text-gray-900 dark:text-gray-100">
-                        {c.color && <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: c.color }} />}
+                    <li key={c.id} className="flex items-center justify-between gap-2 px-5 py-2.5 text-sm transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/40">
+                      <span className="flex items-center gap-2.5 text-slate-800 dark:text-slate-200">
+                        <span
+                          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full"
+                          style={{ backgroundColor: c.color ? `${c.color}1a` : undefined, color: c.color ?? undefined }}
+                        >
+                          {c.color ? <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: c.color }} /> : <TagIcon className="h-3.5 w-3.5 text-slate-400" />}
+                        </span>
                         {c.name}
                       </span>
                       <button
                         onClick={() => deleteCategory.mutate(c.id)}
-                        className="text-xs text-gray-400 hover:text-red-600"
+                        className="rounded-md p-1.5 text-slate-400 transition-colors hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950"
+                        aria-label="Hapus"
                       >
-                        Hapus
+                        <TrashIcon className="h-3.5 w-3.5" />
                       </button>
                     </li>
                   ))}
-                {topLevel.filter((c) => c.type === type).length === 0 && (
-                  <li className="px-4 py-3 text-sm text-gray-500">Belum ada kategori.</li>
-                )}
               </ul>
+            ) : (
+              <EmptyState icon={<TagIcon className="h-5 w-5" />} title="Belum ada kategori" />
             )}
-          </div>
+          </Card>
         ))}
       </div>
     </div>

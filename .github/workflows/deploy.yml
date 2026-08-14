@@ -1,14 +1,9 @@
 name: Deploy to VPS
 
+# Auto-triggers disabled — run manually via "Run workflow" (workflow_dispatch)
+# when needed.
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
-    paths:
-      - 'backend/**'
-      - 'frontend/**'
-      - 'docker-compose.yml'
-      - 'deploy/**'
 
 jobs:
   # Runs only once the repository has the secrets below configured

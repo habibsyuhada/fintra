@@ -15,13 +15,21 @@ import {
   YAxis,
 } from 'recharts'
 import { useCashflowReport, useCategoryBreakdownReport, useTrendReport } from '../api/reports'
+import { formatMoney } from '../lib/format'
+import { PageHeader } from '../components/ui/PageHeader'
+import { Card, CardHeader } from '../components/ui/Card'
+import { EmptyState } from '../components/ui/EmptyState'
+import { Spinner } from '../components/ui/Spinner'
+import { ChartPieIcon } from '../components/ui/icons'
 
 const MONTH_LABELS = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des']
 const PALETTE = ['#6366f1', '#f97316', '#22c55e', '#eab308', '#ec4899', '#06b6d4', '#8b5cf6', '#ef4444']
 
-function formatMoney(amount: number) {
-  return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(
-    amount,
+function ChartLoading() {
+  return (
+    <div className="flex h-64 items-center justify-center">
+      <Spinner />
+    </div>
   )
 }
 
@@ -39,79 +47,89 @@ export default function ReportsPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Laporan</h1>
+      <PageHeader title="Laporan" description="Pantau arus kas dan pola pengeluaranmu dari waktu ke waktu." />
 
-      <div className="rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-4">
-        <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Cashflow Bulanan ({year})</h2>
-        {loadingCashflow ? (
-          <p className="mt-4 text-sm text-gray-500">Memuat...</p>
-        ) : (
-          <div className="mt-4 h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={cashflowData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="currentColor" opacity={0.1} />
-                <XAxis dataKey="name" fontSize={12} />
-                <YAxis fontSize={12} tickFormatter={(v: number) => `${Math.round(v / 1000)}k`} />
-                <Tooltip formatter={(v) => formatMoney(Number(v))} />
-                <Legend />
-                <Bar dataKey="Pemasukan" fill="#22c55e" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="Pengeluaran" fill="#ef4444" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        )}
-      </div>
+      <Card>
+        <CardHeader title={`Cashflow Bulanan (${year})`} />
+        <div className="p-5">
+          {loadingCashflow ? (
+            <ChartLoading />
+          ) : (
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={cashflowData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="currentColor" opacity={0.1} vertical={false} />
+                  <XAxis dataKey="name" fontSize={12} tickLine={false} axisLine={false} stroke="currentColor" opacity={0.5} />
+                  <YAxis fontSize={12} tickLine={false} axisLine={false} stroke="currentColor" opacity={0.5} tickFormatter={(v: number) => `${Math.round(v / 1000)}k`} />
+                  <Tooltip
+                    formatter={(v) => formatMoney(Number(v))}
+                    contentStyle={{ borderRadius: 12, border: '1px solid #e2e8f0', fontSize: 13 }}
+                  />
+                  <Legend wrapperStyle={{ fontSize: 13 }} />
+                  <Bar dataKey="Pemasukan" fill="#10b981" radius={[6, 6, 0, 0]} maxBarSize={28} />
+                  <Bar dataKey="Pengeluaran" fill="#f43f5e" radius={[6, 6, 0, 0]} maxBarSize={28} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          )}
+        </div>
+      </Card>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <div className="rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-4">
-          <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Breakdown Pengeluaran per Kategori</h2>
-          {loadingBreakdown ? (
-            <p className="mt-4 text-sm text-gray-500">Memuat...</p>
-          ) : breakdown && breakdown.items.length > 0 ? (
-            <div className="mt-4 h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={breakdown.items}
-                    dataKey="amount"
-                    nameKey="categoryName"
-                    cx="50%"
-                    cy="50%"
-                    outerRadius={80}
-                    label={((entry: { categoryName?: string; percentage?: number }) =>
-                      `${entry.categoryName ?? ''} (${entry.percentage ?? 0}%)`) as never}
-                  >
-                    {breakdown.items.map((entry, index) => (
-                      <Cell key={entry.categoryId ?? index} fill={entry.color ?? PALETTE[index % PALETTE.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip formatter={(v) => formatMoney(Number(v))} />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-          ) : (
-            <p className="mt-4 text-sm text-gray-500">Belum ada data.</p>
-          )}
-        </div>
+        <Card>
+          <CardHeader title="Breakdown Pengeluaran per Kategori" />
+          <div className="p-5">
+            {loadingBreakdown ? (
+              <ChartLoading />
+            ) : breakdown && breakdown.items.length > 0 ? (
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={breakdown.items}
+                      dataKey="amount"
+                      nameKey="categoryName"
+                      cx="50%"
+                      cy="50%"
+                      outerRadius={80}
+                      paddingAngle={2}
+                      label={((entry: { categoryName?: string; percentage?: number }) =>
+                        `${entry.categoryName ?? ''} (${entry.percentage ?? 0}%)`) as never}
+                    >
+                      {breakdown.items.map((entry, index) => (
+                        <Cell key={entry.categoryId ?? index} fill={entry.color ?? PALETTE[index % PALETTE.length]} stroke="none" />
+                      ))}
+                    </Pie>
+                    <Tooltip formatter={(v) => formatMoney(Number(v))} contentStyle={{ borderRadius: 12, border: '1px solid #e2e8f0', fontSize: 13 }} />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            ) : (
+              <EmptyState icon={<ChartPieIcon className="h-6 w-6" />} title="Belum ada data" />
+            )}
+          </div>
+        </Card>
 
-        <div className="rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-4">
-          <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Tren Pengeluaran (30 hari terakhir)</h2>
-          {loadingTrend ? (
-            <p className="mt-4 text-sm text-gray-500">Memuat...</p>
-          ) : (
-            <div className="mt-4 h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={trendData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="currentColor" opacity={0.1} />
-                  <XAxis dataKey="name" fontSize={12} />
-                  <YAxis fontSize={12} tickFormatter={(v: number) => `${Math.round(v / 1000)}k`} />
-                  <Tooltip formatter={(v) => formatMoney(Number(v))} />
-                  <Line type="monotone" dataKey="total" stroke="#6366f1" strokeWidth={2} dot={false} />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          )}
-        </div>
+        <Card>
+          <CardHeader title="Tren Pengeluaran (30 hari terakhir)" />
+          <div className="p-5">
+            {loadingTrend ? (
+              <ChartLoading />
+            ) : (
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={trendData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="currentColor" opacity={0.1} vertical={false} />
+                    <XAxis dataKey="name" fontSize={12} tickLine={false} axisLine={false} stroke="currentColor" opacity={0.5} />
+                    <YAxis fontSize={12} tickLine={false} axisLine={false} stroke="currentColor" opacity={0.5} tickFormatter={(v: number) => `${Math.round(v / 1000)}k`} />
+                    <Tooltip formatter={(v) => formatMoney(Number(v))} contentStyle={{ borderRadius: 12, border: '1px solid #e2e8f0', fontSize: 13 }} />
+                    <Line type="monotone" dataKey="total" stroke="#6366f1" strokeWidth={2.5} dot={false} />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+          </div>
+        </Card>
       </div>
     </div>
   )

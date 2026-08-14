@@ -5,6 +5,9 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useRegister } from '../api/auth'
 import { useAuthStore } from '../lib/auth-store'
 import { isAxiosError } from 'axios'
+import { Input } from '../components/ui/Field'
+import { Button } from '../components/ui/Button'
+import { AuthShell } from '../components/AuthShell'
 
 const schema = z.object({
   name: z.string().min(1, 'Nama wajib diisi'),
@@ -35,70 +38,42 @@ export default function RegisterPage() {
   })
 
   return (
-    <div className="flex min-h-svh items-center justify-center bg-gray-50 dark:bg-gray-950 px-4">
-      <div className="w-full max-w-sm rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-6 shadow-sm">
-        <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Daftar Fintra</h1>
-        <form onSubmit={onSubmit} className="mt-6 space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Nama</label>
-            <input
-              {...register('name')}
-              className="mt-1 w-full rounded-md border border-gray-300 dark:border-gray-700 bg-transparent px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            />
-            {errors.name && <p className="mt-1 text-xs text-red-600">{errors.name.message}</p>}
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Email</label>
-            <input
-              type="email"
-              {...register('email')}
-              className="mt-1 w-full rounded-md border border-gray-300 dark:border-gray-700 bg-transparent px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            />
-            {errors.email && <p className="mt-1 text-xs text-red-600">{errors.email.message}</p>}
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Password</label>
-            <input
-              type="password"
-              {...register('password')}
-              className="mt-1 w-full rounded-md border border-gray-300 dark:border-gray-700 bg-transparent px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            />
-            {errors.password && <p className="mt-1 text-xs text-red-600">{errors.password.message}</p>}
-          </div>
-          {registerUser.isError && (
-            <p className="text-sm text-red-600">
-              {isAxiosError(registerUser.error) && registerUser.error.response?.data?.message
-                ? String(registerUser.error.response.data.message)
-                : 'Registrasi gagal'}
-            </p>
-          )}
-          <button
-            type="submit"
-            disabled={registerUser.isPending}
-            className="w-full rounded-md bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-500 disabled:opacity-50"
-          >
-            {registerUser.isPending ? 'Memproses...' : 'Daftar'}
-          </button>
-        </form>
-        <p className="mt-4 text-center text-sm text-gray-600 dark:text-gray-400">
-          Sudah punya akun?{' '}
-          <Link to="/login" className="text-indigo-600 hover:underline">
-            Masuk
-          </Link>
-        </p>
-        <div className="mt-4 border-t border-gray-100 dark:border-gray-800 pt-4 text-center">
-          <button
-            onClick={() => {
-              continueAsGuest()
-              navigate('/')
-            }}
-            className="text-sm text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
-          >
-            Lanjutkan tanpa akun →
-          </button>
-          <p className="mt-1 text-xs text-gray-400">Data tersimpan di perangkat ini saja, tidak tersinkron ke cloud.</p>
-        </div>
+    <AuthShell>
+      <h1 className="font-display text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">Buat akun Fintra</h1>
+      <p className="mt-1.5 text-sm text-slate-500 dark:text-slate-400">Gratis, dan datamu tersinkron di semua perangkat.</p>
+      <form onSubmit={onSubmit} className="mt-6 space-y-4">
+        <Input label="Nama" placeholder="Nama lengkap" {...register('name')} error={errors.name?.message} />
+        <Input label="Email" type="email" placeholder="kamu@email.com" {...register('email')} error={errors.email?.message} />
+        <Input label="Password" type="password" placeholder="••••••••" {...register('password')} error={errors.password?.message} />
+        {registerUser.isError && (
+          <p className="rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-600 dark:bg-rose-950 dark:text-rose-400">
+            {isAxiosError(registerUser.error) && registerUser.error.response?.data?.message
+              ? String(registerUser.error.response.data.message)
+              : 'Registrasi gagal'}
+          </p>
+        )}
+        <Button type="submit" loading={registerUser.isPending} className="w-full">
+          {registerUser.isPending ? 'Memproses...' : 'Daftar'}
+        </Button>
+      </form>
+      <p className="mt-5 text-center text-sm text-slate-600 dark:text-slate-400">
+        Sudah punya akun?{' '}
+        <Link to="/login" className="font-medium text-indigo-600 hover:underline dark:text-indigo-400">
+          Masuk
+        </Link>
+      </p>
+      <div className="mt-5 border-t border-slate-100 pt-5 text-center dark:border-slate-800">
+        <button
+          onClick={() => {
+            continueAsGuest()
+            navigate('/')
+          }}
+          className="text-sm font-medium text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
+        >
+          Lanjutkan tanpa akun →
+        </button>
+        <p className="mt-1.5 text-xs text-slate-400 dark:text-slate-600">Data tersimpan di perangkat ini saja, tidak tersinkron ke cloud.</p>
       </div>
-    </div>
+    </AuthShell>
   )
 }
