@@ -4,6 +4,7 @@ import { z } from 'zod'
 import { Link, useNavigate } from 'react-router-dom'
 import { useRegister } from '../api/auth'
 import { useAuthStore } from '../lib/auth-store'
+import { useT } from '../lib/i18n'
 import { isAxiosError } from 'axios'
 
 const schema = z.object({
@@ -21,6 +22,7 @@ export default function RegisterPage() {
   const navigate = useNavigate()
   const registerUser = useRegister()
   const continueAsGuest = useAuthStore((s) => s.continueAsGuest)
+  const t = useT()
   const {
     register,
     handleSubmit,
@@ -37,10 +39,10 @@ export default function RegisterPage() {
   return (
     <div className="flex min-h-svh items-center justify-center bg-gray-50 dark:bg-gray-950 px-4">
       <div className="w-full max-w-sm rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-6 shadow-sm">
-        <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Daftar Fintra</h1>
+        <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">{t('auth.registerTitle')}</h1>
         <form onSubmit={onSubmit} className="mt-6 space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Nama</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">{t('auth.name')}</label>
             <input
               {...register('name')}
               className="mt-1 w-full rounded-md border border-gray-300 dark:border-gray-700 bg-transparent px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
@@ -48,7 +50,7 @@ export default function RegisterPage() {
             {errors.name && <p className="mt-1 text-xs text-red-600">{errors.name.message}</p>}
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Email</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">{t('auth.email')}</label>
             <input
               type="email"
               {...register('email')}
@@ -57,7 +59,7 @@ export default function RegisterPage() {
             {errors.email && <p className="mt-1 text-xs text-red-600">{errors.email.message}</p>}
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Password</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">{t('auth.password')}</label>
             <input
               type="password"
               {...register('password')}
@@ -69,7 +71,7 @@ export default function RegisterPage() {
             <p className="text-sm text-red-600">
               {isAxiosError(registerUser.error) && registerUser.error.response?.data?.message
                 ? String(registerUser.error.response.data.message)
-                : 'Registrasi gagal'}
+                : t('auth.registerFailed')}
             </p>
           )}
           <button
@@ -77,13 +79,13 @@ export default function RegisterPage() {
             disabled={registerUser.isPending}
             className="w-full rounded-md bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-500 disabled:opacity-50"
           >
-            {registerUser.isPending ? 'Memproses...' : 'Daftar'}
+            {registerUser.isPending ? t('auth.registerButtonLoading') : t('auth.registerButton')}
           </button>
         </form>
         <p className="mt-4 text-center text-sm text-gray-600 dark:text-gray-400">
-          Sudah punya akun?{' '}
+          {t('auth.haveAccount')}{' '}
           <Link to="/login" className="text-indigo-600 hover:underline">
-            Masuk
+            {t('auth.loginLink')}
           </Link>
         </p>
         <div className="mt-4 border-t border-gray-100 dark:border-gray-800 pt-4 text-center">
@@ -94,9 +96,9 @@ export default function RegisterPage() {
             }}
             className="text-sm text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
           >
-            Lanjutkan tanpa akun →
+            {t('auth.continueAsGuest')}
           </button>
-          <p className="mt-1 text-xs text-gray-400">Data tersimpan di perangkat ini saja, tidak tersinkron ke cloud.</p>
+          <p className="mt-1 text-xs text-gray-400">{t('auth.guestNote')}</p>
         </div>
       </div>
     </div>

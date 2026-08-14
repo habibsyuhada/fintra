@@ -1,7 +1,26 @@
 @import "tailwindcss";
 
+/* Themes are picked at runtime via the `data-theme` attribute on <html>
+ * (see src/lib/settings-store.ts), not the OS color scheme, so `dark:`
+ * utilities must key off it instead of `prefers-color-scheme`. The "dark"
+ * and "dim" themes are both dark-family, so both enable `dark:` styles;
+ * "dim" additionally overrides the gray/indigo tokens below to look
+ * softer and less contrasty than plain "dark". */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *, [data-theme="dim"], [data-theme="dim"] *));
+
 :root {
   color-scheme: light dark;
+}
+
+[data-theme="light"],
+[data-theme="flat"],
+[data-theme="cat"] {
+  color-scheme: light;
+}
+
+[data-theme="dark"],
+[data-theme="dim"] {
+  color-scheme: dark;
 }
 
 body {
@@ -11,4 +30,53 @@ body {
 
 #root {
   min-height: 100svh;
+}
+
+/* Redup (Dim): a quieter dark mode — softer, warmer, less saturated than
+ * the default "dark" theme. Overriding Tailwind's color tokens re-themes
+ * every `dark:bg-gray-*` / `dark:text-gray-*` / `indigo-*` utility in the
+ * app without touching each page. */
+[data-theme="dim"] {
+  --color-gray-950: #1c1b22;
+  --color-gray-900: #232228;
+  --color-gray-800: #2e2d34;
+  --color-gray-700: #3d3b45;
+  --color-gray-400: #9b98a3;
+  --color-gray-300: #b3b0ba;
+  --color-gray-200: #c8c5cf;
+  --color-gray-100: #d8d6de;
+  --color-indigo-600: #6f7291;
+  --color-indigo-500: #82849f;
+}
+
+/* Flat: light theme with a bold flat accent and no shadows/heavy rounding. */
+[data-theme="flat"] {
+  --color-gray-50: #fafafa;
+  --color-indigo-600: #0d9488;
+  --color-indigo-500: #14b8a6;
+}
+
+[data-theme="flat"] .shadow-sm {
+  box-shadow: none;
+}
+
+[data-theme="flat"] .rounded-xl,
+[data-theme="flat"] .rounded-lg,
+[data-theme="flat"] .rounded-md {
+  border-radius: 0.25rem;
+}
+
+/* Kucing (Cat): a playful light theme with a pink accent and a tiled
+ * cat-paw pattern behind the app's background surfaces. */
+[data-theme="cat"] {
+  --color-gray-50: #fff3f9;
+  --color-indigo-600: #db2777;
+  --color-indigo-500: #ec4899;
+  --cat-paw-pattern: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Cg fill='%23f472b6' fill-opacity='0.35' transform='rotate(-18 50 50)'%3E%3Cellipse cx='50' cy='62' rx='16' ry='13'/%3E%3Cellipse cx='30' cy='42' rx='7' ry='9'/%3E%3Cellipse cx='46' cy='30' rx='7' ry='9'/%3E%3Cellipse cx='64' cy='34' rx='7' ry='9'/%3E%3Cellipse cx='74' cy='50' rx='6.5' ry='8'/%3E%3C/g%3E%3C/svg%3E");
+}
+
+[data-theme="cat"] .bg-gray-50 {
+  background-image: var(--cat-paw-pattern);
+  background-repeat: repeat;
+  background-size: 90px 90px;
 }

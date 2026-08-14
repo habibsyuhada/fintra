@@ -5,6 +5,15 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>frontend</title>
+    <script>
+      // Applied before React mounts so the picked theme renders on first
+      // paint instead of flashing the default light theme.
+      (function () {
+        var validThemes = ['light', 'dark', 'dim', 'flat', 'cat']
+        var theme = localStorage.getItem('fintra-theme')
+        document.documentElement.setAttribute('data-theme', validThemes.indexOf(theme) !== -1 ? theme : 'light')
+      })()
+    </script>
   </head>
   <body>
     <div id="root"></div>
