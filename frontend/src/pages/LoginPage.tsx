@@ -6,6 +6,9 @@ import { useLogin } from '../api/auth'
 import { useAuthStore } from '../lib/auth-store'
 import { useT } from '../lib/i18n'
 import { isAxiosError } from 'axios'
+import { Input } from '../components/ui/Field'
+import { Button } from '../components/ui/Button'
+import { AuthShell } from '../components/AuthShell'
 
 const schema = z.object({
   email: z.string().email('Email tidak valid'),
@@ -33,62 +36,41 @@ export default function LoginPage() {
   })
 
   return (
-    <div className="flex min-h-svh items-center justify-center bg-gray-50 dark:bg-gray-950 px-4">
-      <div className="w-full max-w-sm rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-6 shadow-sm">
-        <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">{t('auth.loginTitle')}</h1>
-        <form onSubmit={onSubmit} className="mt-6 space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">{t('auth.email')}</label>
-            <input
-              type="email"
-              {...register('email')}
-              className="mt-1 w-full rounded-md border border-gray-300 dark:border-gray-700 bg-transparent px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            />
-            {errors.email && <p className="mt-1 text-xs text-red-600">{errors.email.message}</p>}
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">{t('auth.password')}</label>
-            <input
-              type="password"
-              {...register('password')}
-              className="mt-1 w-full rounded-md border border-gray-300 dark:border-gray-700 bg-transparent px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            />
-            {errors.password && <p className="mt-1 text-xs text-red-600">{errors.password.message}</p>}
-          </div>
-          {login.isError && (
-            <p className="text-sm text-red-600">
-              {isAxiosError(login.error) && login.error.response?.data?.message
-                ? String(login.error.response.data.message)
-                : t('auth.loginFailed')}
-            </p>
-          )}
-          <button
-            type="submit"
-            disabled={login.isPending}
-            className="w-full rounded-md bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-500 disabled:opacity-50"
-          >
-            {login.isPending ? t('auth.loginButtonLoading') : t('auth.loginButton')}
-          </button>
-        </form>
-        <p className="mt-4 text-center text-sm text-gray-600 dark:text-gray-400">
-          {t('auth.noAccount')}{' '}
-          <Link to="/register" className="text-indigo-600 hover:underline">
-            {t('auth.registerLink')}
-          </Link>
-        </p>
-        <div className="mt-4 border-t border-gray-100 dark:border-gray-800 pt-4 text-center">
-          <button
-            onClick={() => {
-              continueAsGuest()
-              navigate('/')
-            }}
-            className="text-sm text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
-          >
-            {t('auth.continueAsGuest')}
-          </button>
-          <p className="mt-1 text-xs text-gray-400">{t('auth.guestNote')}</p>
-        </div>
+    <AuthShell>
+      <h1 className="font-display text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">{t('auth.loginTitle')}</h1>
+      <p className="mt-1.5 text-sm text-slate-500 dark:text-slate-400">{t('auth.loginSubtitle')}</p>
+      <form onSubmit={onSubmit} className="mt-6 space-y-4">
+        <Input label={t('auth.email')} type="email" placeholder="kamu@email.com" {...register('email')} error={errors.email?.message} />
+        <Input label={t('auth.password')} type="password" placeholder="••••••••" {...register('password')} error={errors.password?.message} />
+        {login.isError && (
+          <p className="rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-600 dark:bg-rose-950 dark:text-rose-400">
+            {isAxiosError(login.error) && login.error.response?.data?.message
+              ? String(login.error.response.data.message)
+              : t('auth.loginFailed')}
+          </p>
+        )}
+        <Button type="submit" loading={login.isPending} className="w-full">
+          {login.isPending ? t('auth.loginButtonLoading') : t('auth.loginButton')}
+        </Button>
+      </form>
+      <p className="mt-5 text-center text-sm text-slate-600 dark:text-slate-400">
+        {t('auth.noAccount')}{' '}
+        <Link to="/register" className="font-medium text-indigo-600 hover:underline dark:text-indigo-400">
+          {t('auth.registerLink')}
+        </Link>
+      </p>
+      <div className="mt-5 border-t border-slate-100 pt-5 text-center dark:border-slate-800">
+        <button
+          onClick={() => {
+            continueAsGuest()
+            navigate('/')
+          }}
+          className="text-sm font-medium text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
+        >
+          {t('auth.continueAsGuest')}
+        </button>
+        <p className="mt-1.5 text-xs text-slate-400 dark:text-slate-600">{t('auth.guestNote')}</p>
       </div>
-    </div>
+    </AuthShell>
   )
 }

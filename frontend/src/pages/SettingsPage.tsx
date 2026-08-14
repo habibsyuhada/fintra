@@ -1,6 +1,8 @@
 import clsx from 'clsx'
 import { THEMES, useSettingsStore, type Language } from '../lib/settings-store'
 import { useT } from '../lib/i18n'
+import { PageHeader } from '../components/ui/PageHeader'
+import { Card, CardHeader } from '../components/ui/Card'
 
 export default function SettingsPage() {
   const t = useT()
@@ -15,14 +17,12 @@ export default function SettingsPage() {
   ]
 
   return (
-    <div>
-      <h1 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{t('settings.title')}</h1>
+    <div className="space-y-6">
+      <PageHeader title={t('settings.title')} />
 
-      <section className="mt-6 rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-4">
-        <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">{t('settings.themeTitle')}</h2>
-        <p className="mt-1 text-xs text-gray-500">{t('settings.themeDesc')}</p>
-
-        <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5">
+      <Card className="overflow-hidden">
+        <CardHeader title={t('settings.themeTitle')} description={t('settings.themeDesc')} />
+        <div className="grid grid-cols-2 gap-3 p-5 sm:grid-cols-3 md:grid-cols-5">
           {THEMES.map((meta) => {
             const active = meta.id === theme
             return (
@@ -32,10 +32,10 @@ export default function SettingsPage() {
                 onClick={() => setTheme(meta.id)}
                 aria-pressed={active}
                 className={clsx(
-                  'flex flex-col items-stretch overflow-hidden rounded-lg border-2 text-left transition',
+                  'flex flex-col items-stretch overflow-hidden rounded-xl border-2 text-left transition',
                   active
                     ? 'border-indigo-600'
-                    : 'border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-700',
+                    : 'border-slate-200 hover:border-slate-300 dark:border-slate-800 dark:hover:border-slate-700',
                 )}
               >
                 <span
@@ -48,23 +48,19 @@ export default function SettingsPage() {
                   />
                   <span className="h-4 w-4 rounded-full" style={{ backgroundColor: meta.swatch.accent }} />
                 </span>
-                <span className="flex flex-col gap-0.5 bg-white dark:bg-gray-900 px-2 py-2">
-                  <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                    {meta.name[language]}
-                  </span>
-                  <span className="text-[11px] leading-tight text-gray-500">{meta.description[language]}</span>
+                <span className="flex flex-col gap-0.5 bg-white px-2 py-2 dark:bg-slate-900">
+                  <span className="text-sm font-medium text-slate-900 dark:text-slate-100">{meta.name[language]}</span>
+                  <span className="text-[11px] leading-tight text-slate-500">{meta.description[language]}</span>
                 </span>
               </button>
             )
           })}
         </div>
-      </section>
+      </Card>
 
-      <section className="mt-4 rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-4">
-        <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">{t('settings.languageTitle')}</h2>
-        <p className="mt-1 text-xs text-gray-500">{t('settings.languageDesc')}</p>
-
-        <div className="mt-4 flex gap-2">
+      <Card className="overflow-hidden">
+        <CardHeader title={t('settings.languageTitle')} description={t('settings.languageDesc')} />
+        <div className="flex gap-2 p-5">
           {languages.map((opt) => (
             <button
               key={opt.id}
@@ -72,17 +68,17 @@ export default function SettingsPage() {
               onClick={() => setLanguage(opt.id)}
               aria-pressed={opt.id === language}
               className={clsx(
-                'rounded-md border px-4 py-2 text-sm font-medium',
+                'rounded-lg border px-4 py-2 text-sm font-medium transition-colors',
                 opt.id === language
                   ? 'border-indigo-600 bg-indigo-600 text-white'
-                  : 'border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800',
+                  : 'border-slate-300 text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800',
               )}
             >
               {opt.label}
             </button>
           ))}
         </div>
-      </section>
+      </Card>
     </div>
   )
 }
