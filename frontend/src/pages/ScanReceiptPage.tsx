@@ -7,6 +7,7 @@ import { captureReceiptImage } from '../lib/capture-receipt'
 import { useAccounts } from '../api/accounts'
 import { useCategories } from '../api/categories'
 import { useConfirmReceipt, useRejectReceipt, useScanReceipt, type ScanReceiptResult } from '../api/receipts'
+import { useOnlineStatus } from '../lib/network-status'
 
 const schema = z.object({
   accountId: z.string().min(1, 'Pilih akun'),
@@ -36,6 +37,7 @@ export default function ScanReceiptPage() {
   const [result, setResult] = useState<ScanReceiptResult | null>(null)
   const [captureError, setCaptureError] = useState<string | null>(null)
 
+  const online = useOnlineStatus()
   const expenseCategories = useMemo(() => categories?.filter((c) => c.type === 'EXPENSE') ?? [], [categories])
 
   const {
@@ -93,11 +95,18 @@ export default function ScanReceiptPage() {
         sebelum disimpan.
       </p>
 
+      {!online && (
+        <p className="mt-4 rounded-md bg-gray-100 dark:bg-gray-800 px-3 py-2 text-sm text-gray-600 dark:text-gray-400">
+          Scan struk butuh koneksi internet (memanggil model AI). Sambungkan kembali untuk memakainya — atau catat
+          transaksinya secara manual di halaman Transaksi.
+        </p>
+      )}
+
       {!result && (
         <div className="mt-6">
           <button
             onClick={handleCapture}
-            disabled={scanReceipt.isPending}
+            disabled={scanReceipt.isPending || !online}
             className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500 disabled:opacity-50"
           >
             {scanReceipt.isPending ? 'Memindai struk...' : '📷 Ambil Foto Struk'}

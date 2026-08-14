@@ -31,6 +31,10 @@ npm run dev
 
 Web app: http://localhost:5173 (proxy `/api` dan `/uploads` ke backend di port 3000).
 
+## Offline
+
+Fitur inti (akun, kategori, transaksi, transfer, budget, tagihan berulang, dashboard, laporan) bisa dipakai **tanpa koneksi internet** — data tersimpan di IndexedDB lokal dan otomatis tersinkron ke backend begitu online kembali. Scan struk (AI), export, dan audit log tetap butuh internet. Detail mekanismenya ada di [`frontend/README.md`](./frontend/README.md#offline-support).
+
 ## Mobile
 
 `frontend/` sudah di-wrap Capacitor (`npm run cap:android` / `cap:ios`). Lihat `frontend/README.md`.
@@ -52,3 +56,5 @@ Seluruh 7 fase di `PLAN.md` sudah selesai:
 7. **Fitur lanjutan** — recurring transaction (cron), multi-currency snapshot, export CSV/XLSX/PDF, notifikasi lokal (budget & tagihan)
 
 Yang **belum** bisa diverifikasi dari sandbox ini karena butuh kredensial/infra nyata: build APK/IPA sungguhan (perlu Android SDK / Xcode — sudah divalidasi lewat CI), deploy ke VPS asli, dan panggilan AI dengan `OPENROUTER_API_KEY` sungguhan (jalur kode sudah diuji lewat unit test dengan fetch di-mock).
+
+Tambahan di luar roadmap awal `PLAN.md`: **dukungan offline-first** (lihat bagian [Offline](#offline) di atas), ditambahkan atas permintaan setelah fase 1-7 selesai.

@@ -1,25 +1,30 @@
-import { useQuery } from '@tanstack/react-query'
-import { api } from '../lib/api'
-import type { CashflowReport, CategoryBreakdownReport, TrendReport } from '../lib/types'
+import { useLiveQuery } from 'dexie-react-hooks'
+import { useDb } from '../lib/use-db'
+import { computeCashflow, computeCategoryBreakdown, computeTrend } from '../lib/offline-calc'
 
-export function useCashflowReport(year?: number) {
-  return useQuery({
-    queryKey: ['reports', 'cashflow', year],
-    queryFn: async () => (await api.get<CashflowReport>('/reports/cashflow', { params: { year } })).data,
-  })
+export function useCashflowReport(year: number = new Date().getFullYear()) {
+  const db = useDb()
+  const data = useLiveQuery(async () => {
+    const transactions = await db.transactions.toArray()
+    return computeCashflow(transactions, year)
+  }, [db, year])
+  return { data, isLoading: data === undefined }
 }
 
 export function useCategoryBreakdownReport(type: 'INCOME' | 'EXPENSE' = 'EXPENSE') {
-  return useQuery({
-    queryKey: ['reports', 'category-breakdown', type],
-    queryFn: async () =>
-      (await api.get<CategoryBreakdownReport>('/reports/category-breakdown', { params: { type } })).data,
-  })
+  const db = useDb()
+  const data = useLiveQuery(async () => {
+    const [transactions, categories] = await Promise.all([db.transactions.toArray(), db.categories.toArray()])
+    return computeCategoryBreakdown(transactions, categories, type)
+  }, [db, type])
+  return { data, isLoading: data === undefined }
 }
 
 export function useTrendReport(granularity: 'day' | 'week' | 'month' = 'day') {
-  return useQuery({
-    queryKey: ['reports', 'trend', granularity],
-    queryFn: async () => (await api.get<TrendReport>('/reports/trend', { params: { granularity } })).data,
-  })
+  const db = useDb()
+  const data = useLiveQuery(async () => {
+    const transactions = await db.transactions.toArray()
+    return computeTrend(transactions, 'EXPENSE', granularity)
+  }, [db, granularity])
+  return { data, isLoading: data === undefined }
 }

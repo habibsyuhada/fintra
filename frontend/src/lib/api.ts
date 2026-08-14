@@ -1,4 +1,4 @@
-import axios, { AxiosError, type InternalAxiosRequestConfig } from 'axios'
+import axios, { AxiosError, isAxiosError, type InternalAxiosRequestConfig } from 'axios'
 import { useAuthStore } from './auth-store'
 
 export const api = axios.create({
@@ -52,9 +52,15 @@ api.interceptors.response.use(
         const token = await refreshPromise
         original.headers.Authorization = `Bearer ${token}`
         return api(original)
-      } catch {
-        useAuthStore.getState().clear()
-        window.location.href = '/login'
+      } catch (refreshError) {
+        // Only force a logout when the server explicitly rejected the
+        // refresh (invalid/expired session). A network failure here just
+        // means we're offline — keep the cached session so offline pages
+        // keep working, and let the app retry later.
+        if (isAxiosError(refreshError) && refreshError.response) {
+          useAuthStore.getState().clear()
+          window.location.href = '/login'
+        }
         return Promise.reject(error)
       }
     }

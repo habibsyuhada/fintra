@@ -1,6 +1,9 @@
 import { NavLink, Outlet, Navigate } from 'react-router-dom'
+import { useLiveQuery } from 'dexie-react-hooks'
 import { useAuthStore } from '../lib/auth-store'
 import { useAuthReady } from '../lib/auth-provider'
+import { useOnlineStatus } from '../lib/network-status'
+import { getDb } from '../lib/db'
 import { useLogout } from '../api/auth'
 import clsx from 'clsx'
 
@@ -14,6 +17,22 @@ const NAV_ITEMS = [
   { to: '/accounts', label: 'Akun' },
   { to: '/categories', label: 'Kategori' },
 ]
+
+function SyncStatus({ userId }: { userId: string }) {
+  const online = useOnlineStatus()
+  const pending = useLiveQuery(() => getDb(userId).syncQueue.count(), [userId])
+
+  if (online && !pending) {
+    return <span className="text-xs text-green-600">● Tersinkron</span>
+  }
+
+  return (
+    <span className={clsx('text-xs', online ? 'text-amber-600' : 'text-gray-500')}>
+      {online ? '↻' : '●'} {online ? 'Menyinkronkan' : 'Offline'}
+      {pending ? ` (${pending} tertunda)` : ''}
+    </span>
+  )
+}
 
 export default function Layout() {
   const user = useAuthStore((s) => s.user)
@@ -55,6 +74,7 @@ export default function Layout() {
             </nav>
           </div>
           <div className="flex items-center gap-3">
+            <SyncStatus userId={user.id} />
             <span className="text-sm text-gray-600 dark:text-gray-400">{user.name}</span>
             <button
               onClick={() => logout.mutate()}

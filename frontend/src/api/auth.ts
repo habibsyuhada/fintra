@@ -33,8 +33,13 @@ export function useLogout() {
   const clear = useAuthStore((s) => s.clear)
   return useMutation({
     mutationFn: async () => {
-      await api.post('/auth/logout')
+      // Logging out is a local action first — clear the cached session even
+      // if we can't reach the server to revoke the refresh token (offline).
+      try {
+        await api.post('/auth/logout')
+      } finally {
+        clear()
+      }
     },
-    onSuccess: () => clear(),
   })
 }

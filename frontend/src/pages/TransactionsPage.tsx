@@ -7,6 +7,7 @@ import { useCategories } from '../api/categories'
 import { useCreateTransaction, useDeleteTransaction, useTransactions } from '../api/transactions'
 import { useCreateTransfer } from '../api/transfers'
 import { downloadTransactionsExport, type ExportFormat } from '../api/exports'
+import { useOnlineStatus } from '../lib/network-status'
 import type { TransactionType } from '../lib/types'
 
 function formatMoney(amount: string) {
@@ -201,6 +202,7 @@ export default function TransactionsPage() {
   const { data, isLoading } = useTransactions({ type: typeFilter || undefined })
   const deleteTransaction = useDeleteTransaction()
   const [exporting, setExporting] = useState<ExportFormat | null>(null)
+  const online = useOnlineStatus()
 
   const handleExport = async (format: ExportFormat) => {
     setExporting(format)
@@ -233,7 +235,8 @@ export default function TransactionsPage() {
               <button
                 key={format}
                 onClick={() => void handleExport(format)}
-                disabled={exporting !== null}
+                disabled={exporting !== null || !online}
+                title={online ? undefined : 'Perlu koneksi internet'}
                 className="rounded-md border border-gray-300 dark:border-gray-700 px-2 py-1.5 text-xs font-medium uppercase text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50"
               >
                 {exporting === format ? '...' : format}

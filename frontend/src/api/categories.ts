@@ -1,12 +1,21 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { api } from '../lib/api'
+import { useLiveQuery } from 'dexie-react-hooks'
+import { useDb } from '../lib/use-db'
+import { newLocalId } from '../lib/db'
+import { enqueue } from '../lib/sync-engine'
 import type { Category, CategoryType } from '../lib/types'
 
 export function useCategories() {
-  return useQuery({
-    queryKey: ['categories'],
-    queryFn: async () => (await api.get<Category[]>('/categories')).data,
-  })
+  const db = useDb()
+  const data = useLiveQuery(async () => {
+    const categories = await db.categories.toArray()
+    const withChildren: Category[] = categories.map((c) => ({
+      ...c,
+      subcategories: categories.filter((child) => child.parentId === c.id),
+    }))
+    return withChildren
+  }, [db])
+
+  return { data, isLoading: data === undefined }
 }
 
 export interface CategoryInput {
@@ -18,26 +27,50 @@ export interface CategoryInput {
 }
 
 export function useCreateCategory() {
-  const qc = useQueryClient()
-  return useMutation({
-    mutationFn: async (payload: CategoryInput) => (await api.post<Category>('/categories', payload)).data,
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['categories'] }),
-  })
+  const db = useDb()
+  return {
+    mutate: (payload: CategoryInput, opts?: { onSuccess?: () => void }) => {
+      void (async () => {
+        const id = newLocalId()
+        await db.categories.put({
+          id,
+          name: payload.name,
+          type: payload.type,
+          icon: payload.icon ?? null,
+          color: payload.color ?? null,
+          parentId: payload.parentId ?? null,
+        })
+        await enqueue(db, 'category', 'create', id, { ...payload })
+        opts?.onSuccess?.()
+      })()
+    },
+    isPending: false,
+  }
 }
 
 export function useUpdateCategory() {
-  const qc = useQueryClient()
-  return useMutation({
-    mutationFn: async ({ id, ...payload }: Partial<CategoryInput> & { id: string }) =>
-      (await api.patch<Category>(`/categories/${id}`, payload)).data,
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['categories'] }),
-  })
+  const db = useDb()
+  return {
+    mutate: (payload: Partial<CategoryInput> & { id: string }) => {
+      void (async () => {
+        const { id, ...changes } = payload
+        const existing = await db.categories.get(id)
+        if (!existing) return
+        await db.categories.put({ ...existing, ...changes, parentId: changes.parentId ?? existing.parentId })
+        await enqueue(db, 'category', 'update', id, { ...changes })
+      })()
+    },
+  }
 }
 
 export function useDeleteCategory() {
-  const qc = useQueryClient()
-  return useMutation({
-    mutationFn: async (id: string) => (await api.delete(`/categories/${id}`)).data,
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['categories'] }),
-  })
+  const db = useDb()
+  return {
+    mutate: (id: string) => {
+      void (async () => {
+        await db.categories.delete(id)
+        await enqueue(db, 'category', 'delete', id)
+      })()
+    },
+  }
 }
