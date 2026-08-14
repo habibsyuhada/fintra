@@ -56,6 +56,8 @@ const dictionaries = {
     'auth.heroFeature3': 'Pengingat tagihan berulang, tanpa telat',
 
     'settings.title': 'Pengaturan',
+    'settings.tabTheme': 'Tema',
+    'settings.tabLanguage': 'Bahasa',
     'settings.themeTitle': 'Tema Tampilan',
     'settings.themeDesc': 'Pilih tampilan yang paling cocok untukmu.',
     'settings.languageTitle': 'Bahasa',
@@ -118,6 +120,8 @@ const dictionaries = {
     'auth.heroFeature3': 'Recurring bill reminders, so you never miss one',
 
     'settings.title': 'Settings',
+    'settings.tabTheme': 'Theme',
+    'settings.tabLanguage': 'Language',
     'settings.themeTitle': 'App Theme',
     'settings.themeDesc': 'Pick the look that suits you best.',
     'settings.languageTitle': 'Language',
