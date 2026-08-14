@@ -1,0 +1,23 @@
+import { Routes, Route } from 'react-router-dom'
+import Layout from './components/Layout'
+import LoginPage from './pages/LoginPage'
+import RegisterPage from './pages/RegisterPage'
+import DashboardPage from './pages/DashboardPage'
+import AccountsPage from './pages/AccountsPage'
+import CategoriesPage from './pages/CategoriesPage'
+import TransactionsPage from './pages/TransactionsPage'
+
+export default function App() {
+  return (
+    <Routes>
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/register" element={<RegisterPage />} />
+      <Route element={<Layout />}>
+        <Route path="/" element={<DashboardPage />} />
+        <Route path="/accounts" element={<AccountsPage />} />
+        <Route path="/categories" element={<CategoriesPage />} />
+        <Route path="/transactions" element={<TransactionsPage />} />
+      </Route>
+    </Routes>
+  )
+}

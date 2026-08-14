@@ -6,6 +6,10 @@ import { validate } from './config/env.validation';
 import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
 import { HealthController } from './health/health.controller';
+import { AccountsModule } from './accounts/accounts.module';
+import { CategoriesModule } from './categories/categories.module';
+import { TransactionsModule } from './transactions/transactions.module';
+import { TransfersModule } from './transfers/transfers.module';
 
 @Module({
   imports: [
@@ -18,6 +22,10 @@ import { HealthController } from './health/health.controller';
     }),
     PrismaModule,
     AuthModule,
+    AccountsModule,
+    CategoriesModule,
+    TransactionsModule,
+    TransfersModule,
   ],
   controllers: [HealthController],
   providers: [
