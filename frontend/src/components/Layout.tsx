@@ -36,6 +36,8 @@ const NAV_ITEMS = [
   { to: '/categories', label: 'Kategori', icon: TagIcon },
 ]
 
+const GUEST_BANNER_DISMISSED_KEY = 'fintra-guest-banner-dismissed'
+
 function SyncStatus({ userId }: { userId: string }) {
   const online = useOnlineStatus()
   const pending = useLiveQuery(() => getDb(userId).syncQueue.count(), [userId])
@@ -71,12 +73,93 @@ function initials(name: string) {
     .join('')
 }
 
+function MobileMenuOverlay({
+  onClose,
+  user,
+  isGuest,
+  onLogout,
+}: {
+  onClose: () => void
+  user: { id: string; name: string }
+  isGuest: boolean
+  onLogout: () => void
+}) {
+  useEffect(() => {
+    const prevOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.body.style.overflow = prevOverflow
+    }
+  }, [])
+
+  const navLinkClass = ({ isActive }: { isActive: boolean }) =>
+    clsx(
+      'flex items-center gap-3.5 rounded-xl px-4 py-3.5 text-base font-medium transition-colors',
+      isActive
+        ? 'bg-indigo-50 text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-400'
+        : 'text-slate-700 active:bg-slate-100 dark:text-slate-300 dark:active:bg-slate-800',
+    )
+
+  return (
+    <div className="fixed inset-0 z-50 flex animate-fade-in flex-col bg-white lg:hidden dark:bg-slate-950">
+      <div className="flex items-center justify-between px-4 py-3">
+        <div className="flex items-center gap-2">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 to-violet-600 font-display text-sm font-bold text-white">
+            F
+          </div>
+          <span className="font-display text-base font-bold text-slate-900 dark:text-slate-100">Fintra</span>
+        </div>
+        <button
+          onClick={onClose}
+          aria-label="Tutup menu"
+          className="inline-flex items-center justify-center rounded-lg p-2 text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
+        >
+          <CloseIcon className="h-6 w-6" />
+        </button>
+      </div>
+
+      <nav className="flex-1 overflow-y-auto px-4 py-2">
+        <div className="space-y-1">
+          {NAV_ITEMS.map((item) => (
+            <NavLink key={item.to} to={item.to} end={item.end} className={navLinkClass} onClick={onClose}>
+              <item.icon className="h-5 w-5 shrink-0" />
+              {item.label}
+            </NavLink>
+          ))}
+        </div>
+      </nav>
+
+      <div className="border-t border-slate-100 px-4 py-4 dark:border-slate-800">
+        <div className="flex items-center gap-3 px-1 pb-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-200 text-sm font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+            {initials(user.name)}
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm font-medium text-slate-800 dark:text-slate-200">{user.name}</p>
+            {isGuest ? <span className="text-xs text-slate-500">Mode Tamu</span> : <SyncStatus userId={user.id} />}
+          </div>
+        </div>
+        <button
+          onClick={onLogout}
+          className="flex w-full items-center justify-center gap-2 rounded-xl bg-rose-50 px-4 py-3 text-sm font-medium text-rose-600 hover:bg-rose-100 dark:bg-rose-950 dark:hover:bg-rose-900/60"
+        >
+          <LogoutIcon className="h-4 w-4" />
+          {isGuest ? 'Keluar mode tamu' : 'Keluar'}
+        </button>
+      </div>
+    </div>
+  )
+}
+
 export default function Layout() {
   const user = useAuthStore((s) => s.user)
   const isGuest = useAuthStore((s) => s.isGuest)
   const ready = useAuthReady()
   const logout = useLogout()
   const [menuOpen, setMenuOpen] = useState(false)
+  const [guestBannerDismissed, setGuestBannerDismissed] = useState(
+    () => typeof window !== 'undefined' && localStorage.getItem(GUEST_BANNER_DISMISSED_KEY) === '1',
+  )
   const location = useLocation()
 
   useEffect(() => {
@@ -105,15 +188,29 @@ export default function Layout() {
         : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800/70 dark:hover:text-slate-100',
     )
 
+  const dismissGuestBanner = () => {
+    setGuestBannerDismissed(true)
+    localStorage.setItem(GUEST_BANNER_DISMISSED_KEY, '1')
+  }
+
   return (
     <div className="min-h-svh bg-slate-50 dark:bg-slate-950">
-      {isGuest && (
-        <div className="bg-amber-50 px-4 py-2 text-center text-xs text-amber-800 dark:bg-amber-950 dark:text-amber-400">
-          Mode Tamu — data hanya tersimpan di perangkat ini.{' '}
-          <Link to="/login" className="font-semibold underline underline-offset-2">
-            Daftar/Masuk
-          </Link>{' '}
-          untuk menyinkronkannya ke akun.
+      {isGuest && !guestBannerDismissed && (
+        <div className="flex items-center justify-center gap-2 bg-amber-50 px-4 py-2 text-center text-xs text-amber-800 dark:bg-amber-950 dark:text-amber-400">
+          <p className="flex-1">
+            Mode Tamu — data hanya tersimpan di perangkat ini.{' '}
+            <Link to="/login" className="font-semibold underline underline-offset-2">
+              Daftar/Masuk
+            </Link>{' '}
+            untuk menyinkronkannya ke akun.
+          </p>
+          <button
+            onClick={dismissGuestBanner}
+            aria-label="Tutup pemberitahuan"
+            className="shrink-0 rounded-md p-1 text-amber-700 hover:bg-amber-100 dark:text-amber-400 dark:hover:bg-amber-900/50"
+          >
+            <CloseIcon className="h-3.5 w-3.5" />
+          </button>
         </div>
       )}
 
@@ -172,44 +269,14 @@ export default function Layout() {
                 </span>
               </div>
               <button
-                onClick={() => setMenuOpen((v) => !v)}
-                aria-label={menuOpen ? 'Tutup menu' : 'Buka menu'}
+                onClick={() => setMenuOpen(true)}
+                aria-label="Buka menu"
                 aria-expanded={menuOpen}
                 className="inline-flex items-center justify-center rounded-lg p-2 text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
               >
-                {menuOpen ? <CloseIcon className="h-5 w-5" /> : <MenuIcon className="h-5 w-5" />}
+                <MenuIcon className="h-5 w-5" />
               </button>
             </div>
-            {menuOpen && (
-              <div className="animate-fade-in border-t border-slate-200 px-4 py-3 dark:border-slate-800">
-                <nav className="grid grid-cols-2 gap-1.5">
-                  {NAV_ITEMS.map((item) => (
-                    <NavLink key={item.to} to={item.to} end={item.end} className={navLinkClass}>
-                      <item.icon className="h-[18px] w-[18px] shrink-0" />
-                      {item.label}
-                    </NavLink>
-                  ))}
-                </nav>
-                <div className="mt-3 flex items-center justify-between border-t border-slate-100 pt-3 dark:border-slate-800">
-                  <div className="flex items-center gap-2">
-                    <div className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-200 text-[11px] font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
-                      {initials(user.name)}
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-slate-800 dark:text-slate-200">{user.name}</p>
-                      {isGuest ? <span className="text-xs text-slate-500">Mode Tamu</span> : <SyncStatus userId={user.id} />}
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => logout.mutate()}
-                    className="inline-flex items-center gap-1.5 rounded-md px-2 py-1.5 text-xs font-medium text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950"
-                  >
-                    <LogoutIcon className="h-4 w-4" />
-                    {isGuest ? 'Keluar mode tamu' : 'Keluar'}
-                  </button>
-                </div>
-              </div>
-            )}
           </header>
 
           <main className="mx-auto max-w-5xl px-4 py-6 pb-24 lg:px-8 lg:py-8 lg:pb-8">
@@ -239,6 +306,18 @@ export default function Layout() {
           </NavLink>
         ))}
       </nav>
+
+      {menuOpen && (
+        <MobileMenuOverlay
+          onClose={() => setMenuOpen(false)}
+          user={user}
+          isGuest={isGuest}
+          onLogout={() => {
+            setMenuOpen(false)
+            logout.mutate()
+          }}
+        />
+      )}
     </div>
   )
 }
