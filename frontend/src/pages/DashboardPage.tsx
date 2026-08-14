@@ -1,3 +1,5 @@
+import { useState } from 'react'
+import { useLocation } from 'react-router-dom'
 import { useAccounts } from '../api/accounts'
 import { useTransactions } from '../api/transactions'
 
@@ -10,11 +12,22 @@ function formatMoney(amount: number) {
 export default function DashboardPage() {
   const { data: accounts, isLoading: loadingAccounts } = useAccounts()
   const { data: transactions, isLoading: loadingTx } = useTransactions({ limit: 10 })
+  const location = useLocation()
+  const migratedCount = (location.state as { migratedCount?: number } | null)?.migratedCount
+  const [showMigratedBanner, setShowMigratedBanner] = useState(Boolean(migratedCount))
 
   const totalBalance = accounts?.reduce((sum, a) => sum + Number(a.balance), 0) ?? 0
 
   return (
     <div>
+      {showMigratedBanner && migratedCount && (
+        <div className="mb-4 flex items-center justify-between rounded-md bg-green-50 dark:bg-green-950 px-3 py-2 text-sm text-green-700 dark:text-green-400">
+          <span>{migratedCount} data dari mode tamu berhasil digabungkan ke akunmu.</span>
+          <button onClick={() => setShowMigratedBanner(false)} className="text-xs underline">
+            Tutup
+          </button>
+        </div>
+      )}
       <h1 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Dashboard</h1>
 
       <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-3">

@@ -3,6 +3,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Link, useNavigate } from 'react-router-dom'
 import { useLogin } from '../api/auth'
+import { useAuthStore } from '../lib/auth-store'
 import { isAxiosError } from 'axios'
 
 const schema = z.object({
@@ -15,6 +16,7 @@ type FormValues = z.infer<typeof schema>
 export default function LoginPage() {
   const navigate = useNavigate()
   const login = useLogin()
+  const continueAsGuest = useAuthStore((s) => s.continueAsGuest)
   const {
     register,
     handleSubmit,
@@ -22,7 +24,10 @@ export default function LoginPage() {
   } = useForm<FormValues>({ resolver: zodResolver(schema) })
 
   const onSubmit = handleSubmit((values) => {
-    login.mutate(values, { onSuccess: () => navigate('/') })
+    login.mutate(values, {
+      onSuccess: (data) =>
+        navigate('/', { state: data.migratedCount > 0 ? { migratedCount: data.migratedCount } : undefined }),
+    })
   })
 
   return (
@@ -69,6 +74,18 @@ export default function LoginPage() {
             Daftar
           </Link>
         </p>
+        <div className="mt-4 border-t border-gray-100 dark:border-gray-800 pt-4 text-center">
+          <button
+            onClick={() => {
+              continueAsGuest()
+              navigate('/')
+            }}
+            className="text-sm text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+          >
+            Lanjutkan tanpa akun →
+          </button>
+          <p className="mt-1 text-xs text-gray-400">Data tersimpan di perangkat ini saja, tidak tersinkron ke cloud.</p>
+        </div>
       </div>
     </div>
   )

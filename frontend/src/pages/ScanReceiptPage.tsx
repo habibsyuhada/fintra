@@ -8,6 +8,7 @@ import { useAccounts } from '../api/accounts'
 import { useCategories } from '../api/categories'
 import { useConfirmReceipt, useRejectReceipt, useScanReceipt, type ScanReceiptResult } from '../api/receipts'
 import { useOnlineStatus } from '../lib/network-status'
+import { useAuthStore } from '../lib/auth-store'
 
 const schema = z.object({
   accountId: z.string().min(1, 'Pilih akun'),
@@ -37,7 +38,8 @@ export default function ScanReceiptPage() {
   const [result, setResult] = useState<ScanReceiptResult | null>(null)
   const [captureError, setCaptureError] = useState<string | null>(null)
 
-  const online = useOnlineStatus()
+  const isGuest = useAuthStore((s) => s.isGuest)
+  const online = useOnlineStatus() && !isGuest
   const expenseCategories = useMemo(() => categories?.filter((c) => c.type === 'EXPENSE') ?? [], [categories])
 
   const {
@@ -97,8 +99,9 @@ export default function ScanReceiptPage() {
 
       {!online && (
         <p className="mt-4 rounded-md bg-gray-100 dark:bg-gray-800 px-3 py-2 text-sm text-gray-600 dark:text-gray-400">
-          Scan struk butuh koneksi internet (memanggil model AI). Sambungkan kembali untuk memakainya — atau catat
-          transaksinya secara manual di halaman Transaksi.
+          {isGuest
+            ? 'Scan struk butuh akun (memanggil AI lewat server) — daftar/masuk dulu untuk memakainya. Sementara itu catat transaksinya secara manual di halaman Transaksi.'
+            : 'Scan struk butuh koneksi internet (memanggil model AI). Sambungkan kembali untuk memakainya — atau catat transaksinya secara manual di halaman Transaksi.'}
         </p>
       )}
 

@@ -12,6 +12,7 @@ import {
   type SyncQueueItem,
 } from './db'
 import { pingBackend, useNetworkStore } from './network-status'
+import { useAuthStore } from './auth-store'
 
 type ServerRecord = { id: string } & Record<string, unknown>
 
@@ -26,7 +27,7 @@ const ENDPOINTS: Record<SyncQueueItem['entity'], string> = {
 
 /** Fields (across all entities) that reference another entity's id and must
  * be rewritten when that entity's temp local id is replaced by its real one. */
-const REFERENCE_FIELDS = ['accountId', 'categoryId', 'fromAccountId', 'toAccountId'] as const
+const REFERENCE_FIELDS = ['accountId', 'categoryId', 'fromAccountId', 'toAccountId', 'parentId'] as const
 
 function remapReferences(payload: Record<string, unknown> | undefined, oldId: string, newId: string) {
   if (!payload) return
@@ -46,6 +47,7 @@ async function remapLocalId(db: FintraDB, entity: SyncQueueItem['entity'], oldId
     await db.transactions.where('categoryId').equals(oldId).modify({ categoryId: newId })
     await db.budgets.where('categoryId').equals(oldId).modify({ categoryId: newId })
     await db.recurringRules.where('categoryId').equals(oldId).modify({ categoryId: newId })
+    await db.categories.where('parentId').equals(oldId).modify({ parentId: newId })
   }
 
   // Rewrite references inside not-yet-processed queue items (in-memory, so
@@ -187,22 +189,43 @@ function stripComputed<T extends object>(items: T[], fields: string[]): T[] {
 }
 
 /** Queues a mutation and kicks off a best-effort background sync attempt
- * (which is a no-op if we're offline — the item just stays queued). */
+ * (which is a no-op if we're offline — the item just stays queued). Guest
+ * sessions (no account) never queue anything — there's nowhere to sync to
+ * until the guest registers or logs in, at which point migrateGuestData()
+ * takes over. */
 export async function enqueue(
   db: FintraDB,
   entity: SyncQueueItem['entity'],
   operation: SyncQueueItem['operation'],
   localId: string,
   payload?: Record<string, unknown>,
+  opts?: { silent?: boolean },
 ): Promise<void> {
+  if (useAuthStore.getState().isGuest) return
   await db.syncQueue.add({ entity, operation, localId, payload, createdAt: Date.now() })
-  void runSync(db)
+  if (!opts?.silent) void runSync(db)
 }
 
 let syncInFlight: Promise<void> | null = null
+let syncSuspended = false
+
+/** Pauses runSync() (turns it into a no-op) until resumeSync() is called.
+ * Used by guest-migration.ts: it writes directly to the newly-authenticated
+ * user's tables and needs those writes to land before any pull() runs,
+ * otherwise a pull's clear()+bulkPut() (triggered by AuthProvider's own
+ * online-transition effect, which fires around the same time) could wipe
+ * them out mid-migration. */
+export function suspendSync(): void {
+  syncSuspended = true
+}
+
+export function resumeSync(): void {
+  syncSuspended = false
+}
 
 /** Push then pull, coalescing concurrent callers into a single run. */
 export async function runSync(db: FintraDB): Promise<void> {
+  if (syncSuspended) return
   if (syncInFlight) return syncInFlight
   syncInFlight = (async () => {
     const online = await pingBackend()

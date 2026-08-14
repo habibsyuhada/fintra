@@ -7,7 +7,10 @@ export interface AuthUser {
   createdAt: string
 }
 
+export const GUEST_USER_ID = 'guest'
+
 const CACHED_USER_KEY = 'fintra-cached-user'
+const GUEST_MODE_KEY = 'fintra-guest-mode'
 
 /** Persists only the user's profile (never the token) so a returning,
  * already-logged-in user can be recognized while fully offline. Any actual
@@ -26,6 +29,19 @@ function setCachedUser(user: AuthUser | null) {
   else localStorage.removeItem(CACHED_USER_KEY)
 }
 
+export function wasGuestMode(): boolean {
+  return localStorage.getItem(GUEST_MODE_KEY) === '1'
+}
+
+function setGuestModeFlag(active: boolean) {
+  if (active) localStorage.setItem(GUEST_MODE_KEY, '1')
+  else localStorage.removeItem(GUEST_MODE_KEY)
+}
+
+function makeGuestUser(): AuthUser {
+  return { id: GUEST_USER_ID, email: '', name: 'Tamu', createdAt: new Date().toISOString() }
+}
+
 interface AuthState {
   user: AuthUser | null
   accessToken: string | null
@@ -33,8 +49,12 @@ interface AuthState {
   /** true when the current session was restored from local cache without a
    * fresh token, because the app started offline. */
   isOfflineSession: boolean
+  /** true when using the app locally without any account — nothing ever
+   * syncs to a server until the guest registers or logs in. */
+  isGuest: boolean
   setAuth: (user: AuthUser, accessToken: string) => void
   restoreOfflineUser: (user: AuthUser) => void
+  continueAsGuest: () => void
   setHydrated: (hydrated: boolean) => void
   clear: () => void
 }
@@ -44,14 +64,21 @@ export const useAuthStore = create<AuthState>((set) => ({
   accessToken: null,
   isHydrated: false,
   isOfflineSession: false,
+  isGuest: false,
   setAuth: (user, accessToken) => {
     setCachedUser(user)
-    set({ user, accessToken, isOfflineSession: false })
+    setGuestModeFlag(false)
+    set({ user, accessToken, isOfflineSession: false, isGuest: false })
   },
-  restoreOfflineUser: (user) => set({ user, accessToken: null, isOfflineSession: true }),
+  restoreOfflineUser: (user) => set({ user, accessToken: null, isOfflineSession: true, isGuest: false }),
+  continueAsGuest: () => {
+    setGuestModeFlag(true)
+    set({ user: makeGuestUser(), accessToken: null, isOfflineSession: false, isGuest: true })
+  },
   setHydrated: (hydrated) => set({ isHydrated: hydrated }),
   clear: () => {
     setCachedUser(null)
-    set({ user: null, accessToken: null, isOfflineSession: false })
+    setGuestModeFlag(false)
+    set({ user: null, accessToken: null, isOfflineSession: false, isGuest: false })
   },
 }))

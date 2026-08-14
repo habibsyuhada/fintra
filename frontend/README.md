@@ -37,6 +37,14 @@ Aplikasi ini **offline-first** untuk fitur inti (akun, kategori, transaksi, tran
 
 Sudah diuji lewat Playwright dengan koneksi benar-benar diputus (`context.setOffline(true)`): membuat akun/kategori/transaksi saat offline, reload penuh saat offline (app shell + data tetap tampil, tidak ter-redirect ke login), lalu reconnect dan verifikasi data tersinkron ke database server dengan id asli.
 
+## Mode Tamu (tanpa akun)
+
+Dari halaman login/register ada tombol "Lanjutkan tanpa akun" (`useAuthStore().continueAsGuest()`). Mode ini pakai infrastruktur offline-first yang sama persis — data disimpan di IndexedDB lokal khusus (`fintra-guest`) — hanya saja `sync-engine.ts` tidak pernah mem-push apa pun ke server (lihat guard `isGuest` di `enqueue()`), jadi murni lokal di perangkat. Pilihan mode tamu diingat lewat `localStorage` sehingga reload/reopen app tetap masuk mode tamu tanpa perlu klik ulang.
+
+Saat tamu akhirnya Daftar/Masuk, `src/lib/guest-migration.ts` otomatis memindahkan semua data lokalnya (akun/kategori/transaksi/transfer/budget/tagihan berulang) ke akun yang baru login, lalu mem-push semuanya ke server dan menghapus database tamu. `suspendSync()`/`resumeSync()` mencegah race condition dengan sinkronisasi otomatis yang terpicu begitu login berhasil (supaya data lokal tidak sempat "tertimpa" pull kosong dari server sebelum migrasi selesai di-antrekan). Fitur yang butuh backend (scan struk, export) tetap tidak tersedia untuk tamu meski online — pesannya membedakan "belum punya akun" dari "tidak ada internet".
+
+Diuji end-to-end: buat data sebagai tamu -> reload (tetap tamu, data persis) -> daftar akun baru -> banner "N data dari mode tamu berhasil digabungkan" -> data tadi muncul di akun baru -> tersinkron ke server dengan id asli.
+
 ## Mobile (Capacitor)
 
 SPA yang sama di-wrap jadi Android/iOS app via Capacitor (`capacitor.config.ts`, appId `com.fintra.app`). Plugin terpasang: `@capacitor/camera`, `@capacitor/local-notifications`, `@capacitor/preferences`, `@capacitor/app`.
