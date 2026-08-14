@@ -10,6 +10,8 @@ import { AccountsModule } from './accounts/accounts.module';
 import { CategoriesModule } from './categories/categories.module';
 import { TransactionsModule } from './transactions/transactions.module';
 import { TransfersModule } from './transfers/transfers.module';
+import { BudgetsModule } from './budgets/budgets.module';
+import { ReportsModule } from './reports/reports.module';
 
 @Module({
   imports: [
@@ -26,6 +28,8 @@ import { TransfersModule } from './transfers/transfers.module';
     CategoriesModule,
     TransactionsModule,
     TransfersModule,
+    BudgetsModule,
+    ReportsModule,
   ],
   controllers: [HealthController],
   providers: [

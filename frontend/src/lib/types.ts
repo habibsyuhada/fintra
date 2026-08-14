@@ -1,6 +1,8 @@
 export type AccountType = 'CASH' | 'BANK' | 'EWALLET' | 'CREDIT_CARD'
 export type CategoryType = 'INCOME' | 'EXPENSE'
 export type TransactionType = 'INCOME' | 'EXPENSE'
+export type BudgetPeriod = 'WEEKLY' | 'MONTHLY' | 'YEARLY'
+export type BudgetStatus = 'OK' | 'NEAR' | 'OVER'
 
 export interface Account {
   id: string
@@ -57,4 +59,36 @@ export interface Transfer {
   note: string | null
   fromAccount?: { id: string; name: string }
   toAccount?: { id: string; name: string }
+}
+
+export interface Budget {
+  id: string
+  categoryId: string
+  amount: string
+  period: BudgetPeriod
+  startDate: string
+  category?: Category
+  periodStart: string
+  periodEnd: string
+  spent: number
+  remaining: number
+  percentage: number
+  status: BudgetStatus
+}
+
+export interface CashflowReport {
+  year: number
+  months: { month: number; income: number; expense: number; net: number }[]
+}
+
+export interface CategoryBreakdownReport {
+  type: TransactionType
+  total: number
+  items: { categoryId: string | null; categoryName: string; color: string | null; amount: number; percentage: number }[]
+}
+
+export interface TrendReport {
+  type: TransactionType
+  granularity: 'day' | 'week' | 'month'
+  items: { date: string; total: number }[]
 }

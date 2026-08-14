@@ -7,6 +7,8 @@ import clsx from 'clsx'
 const NAV_ITEMS = [
   { to: '/', label: 'Dashboard', end: true },
   { to: '/transactions', label: 'Transaksi' },
+  { to: '/budgets', label: 'Budget' },
+  { to: '/reports', label: 'Laporan' },
   { to: '/accounts', label: 'Akun' },
   { to: '/categories', label: 'Kategori' },
 ]
