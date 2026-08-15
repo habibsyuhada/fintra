@@ -1,15 +1,16 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { useCategories, useCreateCategory, useDeleteCategory } from '../api/categories'
+import { useCategories, useCreateCategory, useDeleteCategory, useUpdateCategory } from '../api/categories'
+import type { Category } from '../lib/types'
 import { PageHeader } from '../components/ui/PageHeader'
 import { Card, CardHeader } from '../components/ui/Card'
 import { Button } from '../components/ui/Button'
 import { Input, Select } from '../components/ui/Field'
 import { EmptyState } from '../components/ui/EmptyState'
 import { LoadingRows } from '../components/ui/Spinner'
-import { PlusIcon, TagIcon, TrashIcon } from '../components/ui/icons'
+import { PencilIcon, PlusIcon, TagIcon, TrashIcon } from '../components/ui/icons'
 
 const schema = z.object({
   name: z.string().min(1, 'Nama wajib diisi'),
@@ -22,8 +23,10 @@ type FormValues = z.infer<typeof schema>
 export default function CategoriesPage() {
   const { data: categories, isLoading } = useCategories()
   const createCategory = useCreateCategory()
+  const updateCategory = useUpdateCategory()
   const deleteCategory = useDeleteCategory()
   const [showForm, setShowForm] = useState(false)
+  const [editingCategory, setEditingCategory] = useState<Category | null>(null)
 
   const {
     register,
@@ -32,14 +35,31 @@ export default function CategoriesPage() {
     formState: { errors },
   } = useForm<FormValues>({ resolver: zodResolver(schema), defaultValues: { type: 'EXPENSE' } })
 
+  useEffect(() => {
+    if (editingCategory) {
+      reset({ name: editingCategory.name, type: editingCategory.type, color: editingCategory.color ?? undefined })
+    }
+  }, [editingCategory, reset])
+
+  const closeForm = () => {
+    setShowForm(false)
+    setEditingCategory(null)
+    reset({ name: '', type: 'EXPENSE', color: undefined })
+  }
+
   const onSubmit = handleSubmit((values) => {
-    createCategory.mutate(values, {
-      onSuccess: () => {
-        reset()
-        setShowForm(false)
-      },
-    })
+    if (editingCategory) {
+      updateCategory.mutate({ id: editingCategory.id, ...values })
+      closeForm()
+    } else {
+      createCategory.mutate(values, { onSuccess: () => closeForm() })
+    }
   })
+
+  const startEdit = (category: Category) => {
+    setEditingCategory(category)
+    setShowForm(true)
+  }
 
   const topLevel = categories?.filter((c) => !c.parentId) ?? []
 
@@ -49,7 +69,11 @@ export default function CategoriesPage() {
         title="Kategori"
         description="Kelompokkan transaksi agar laporan lebih rapi."
         actions={
-          <Button icon={<PlusIcon className="h-4 w-4" />} onClick={() => setShowForm((v) => !v)} variant={showForm ? 'secondary' : 'primary'}>
+          <Button
+            icon={<PlusIcon className="h-4 w-4" />}
+            onClick={() => (showForm ? closeForm() : setShowForm(true))}
+            variant={showForm ? 'secondary' : 'primary'}
+          >
             {showForm ? 'Batal' : 'Tambah Kategori'}
           </Button>
         }
@@ -57,6 +81,9 @@ export default function CategoriesPage() {
 
       {showForm && (
         <Card className="animate-fade-in p-5">
+          <p className="mb-3 text-sm font-semibold text-slate-800 dark:text-slate-200">
+            {editingCategory ? 'Edit Kategori' : 'Kategori Baru'}
+          </p>
           <form onSubmit={onSubmit} className="grid grid-cols-1 gap-3 sm:grid-cols-4">
             <Input label="Nama" {...register('name')} error={errors.name?.message} />
             <Select label="Tipe" {...register('type')}>
@@ -69,7 +96,7 @@ export default function CategoriesPage() {
             </div>
             <div className="flex items-end">
               <Button type="submit" loading={createCategory.isPending} className="w-full">
-                Simpan
+                {editingCategory ? 'Simpan Perubahan' : 'Simpan'}
               </Button>
             </div>
           </form>
@@ -97,13 +124,22 @@ export default function CategoriesPage() {
                         </span>
                         {c.name}
                       </span>
-                      <button
-                        onClick={() => deleteCategory.mutate(c.id)}
-                        className="rounded-md p-1.5 text-slate-400 transition-colors hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950"
-                        aria-label="Hapus"
-                      >
-                        <TrashIcon className="h-3.5 w-3.5" />
-                      </button>
+                      <span className="flex items-center gap-1">
+                        <button
+                          onClick={() => startEdit(c)}
+                          className="rounded-md p-1.5 text-slate-400 transition-colors hover:bg-indigo-50 hover:text-indigo-600 dark:hover:bg-indigo-500/10 dark:hover:text-indigo-400"
+                          aria-label="Edit"
+                        >
+                          <PencilIcon className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                          onClick={() => deleteCategory.mutate(c.id)}
+                          className="rounded-md p-1.5 text-slate-400 transition-colors hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950"
+                          aria-label="Hapus"
+                        >
+                          <TrashIcon className="h-3.5 w-3.5" />
+                        </button>
+                      </span>
                     </li>
                   ))}
               </ul>

@@ -25,13 +25,17 @@ export function FieldWrap({
   )
 }
 
-export const Input = forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLInputElement> & { label?: string; error?: string; wrapClassName?: string }>(
-  ({ label, error, className, wrapClassName, ...props }, ref) => (
-    <FieldWrap label={label} error={error} className={wrapClassName}>
-      <input ref={ref} className={clsx(fieldClass, className)} {...props} />
-    </FieldWrap>
-  ),
-)
+export const Input = forwardRef<
+  HTMLInputElement,
+  InputHTMLAttributes<HTMLInputElement> & { label?: string; error?: string; wrapClassName?: string; rightSlot?: ReactNode }
+>(({ label, error, className, wrapClassName, rightSlot, ...props }, ref) => (
+  <FieldWrap label={label} error={error} className={wrapClassName}>
+    <div className="relative">
+      <input ref={ref} className={clsx(fieldClass, rightSlot && 'pr-10', className)} {...props} />
+      {rightSlot && <div className="absolute inset-y-0 right-0 flex items-center pr-2">{rightSlot}</div>}
+    </div>
+  </FieldWrap>
+))
 Input.displayName = 'Input'
 
 export const Select = forwardRef<

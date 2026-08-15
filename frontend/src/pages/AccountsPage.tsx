@@ -1,9 +1,9 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useAccounts, useCreateAccount, useUpdateAccount } from '../api/accounts'
-import type { AccountType } from '../lib/types'
+import type { Account, AccountType } from '../lib/types'
 import { formatMoney } from '../lib/format'
 import { PageHeader } from '../components/ui/PageHeader'
 import { Card } from '../components/ui/Card'
@@ -12,7 +12,7 @@ import { Input, Select } from '../components/ui/Field'
 import { Badge } from '../components/ui/Badge'
 import { EmptyState } from '../components/ui/EmptyState'
 import { LoadingRows } from '../components/ui/Spinner'
-import { PlusIcon, WalletIcon } from '../components/ui/icons'
+import { PencilIcon, PlusIcon, WalletIcon } from '../components/ui/icons'
 import clsx from 'clsx'
 
 const ACCOUNT_TYPES: { value: AccountType; label: string }[] = [
@@ -37,6 +37,7 @@ export default function AccountsPage() {
   const createAccount = useCreateAccount()
   const updateAccount = useUpdateAccount()
   const [showForm, setShowForm] = useState(false)
+  const [editingAccount, setEditingAccount] = useState<Account | null>(null)
 
   const {
     register,
@@ -48,14 +49,31 @@ export default function AccountsPage() {
     defaultValues: { type: 'CASH', currency: 'IDR' },
   })
 
+  useEffect(() => {
+    if (editingAccount) {
+      reset({ name: editingAccount.name, type: editingAccount.type, currency: editingAccount.currency })
+    }
+  }, [editingAccount, reset])
+
+  const closeForm = () => {
+    setShowForm(false)
+    setEditingAccount(null)
+    reset({ name: '', type: 'CASH', currency: 'IDR', initialBalance: undefined })
+  }
+
   const onSubmit = handleSubmit((values) => {
-    createAccount.mutate(values, {
-      onSuccess: () => {
-        reset()
-        setShowForm(false)
-      },
-    })
+    if (editingAccount) {
+      updateAccount.mutate({ id: editingAccount.id, name: values.name, type: values.type, currency: values.currency })
+      closeForm()
+    } else {
+      createAccount.mutate(values, { onSuccess: () => closeForm() })
+    }
   })
+
+  const startEdit = (account: Account) => {
+    setEditingAccount(account)
+    setShowForm(true)
+  }
 
   return (
     <div className="space-y-4">
@@ -63,7 +81,11 @@ export default function AccountsPage() {
         title="Akun"
         description="Kelola dompet, rekening bank, dan sumber dana lainnya."
         actions={
-          <Button icon={<PlusIcon className="h-4 w-4" />} onClick={() => setShowForm((v) => !v)} variant={showForm ? 'secondary' : 'primary'}>
+          <Button
+            icon={<PlusIcon className="h-4 w-4" />}
+            onClick={() => (showForm ? closeForm() : setShowForm(true))}
+            variant={showForm ? 'secondary' : 'primary'}
+          >
             {showForm ? 'Batal' : 'Tambah Akun'}
           </Button>
         }
@@ -71,6 +93,9 @@ export default function AccountsPage() {
 
       {showForm && (
         <Card className="animate-fade-in p-5">
+          <p className="mb-3 text-sm font-semibold text-slate-800 dark:text-slate-200">
+            {editingAccount ? 'Edit Akun' : 'Akun Baru'}
+          </p>
           <form onSubmit={onSubmit} className="grid grid-cols-1 gap-3 sm:grid-cols-4">
             <Input label="Nama" {...register('name')} error={errors.name?.message} />
             <Select label="Tipe" {...register('type')}>
@@ -80,10 +105,10 @@ export default function AccountsPage() {
                 </option>
               ))}
             </Select>
-            <Input label="Saldo Awal" type="number" step="0.01" {...register('initialBalance')} />
+            {!editingAccount && <Input label="Saldo Awal" type="number" step="0.01" {...register('initialBalance')} />}
             <div className="flex items-end">
               <Button type="submit" loading={createAccount.isPending} className="w-full">
-                Simpan
+                {editingAccount ? 'Simpan Perubahan' : 'Simpan'}
               </Button>
             </div>
           </form>
@@ -121,12 +146,21 @@ export default function AccountsPage() {
                       {formatMoney(account.balance, account.currency)}
                     </td>
                     <td className="px-5 py-3 text-right">
-                      <button
-                        onClick={() => updateAccount.mutate({ id: account.id, isArchived: !account.isArchived })}
-                        className="text-xs font-medium text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400"
-                      >
-                        {account.isArchived ? 'Aktifkan' : 'Arsipkan'}
-                      </button>
+                      <div className="flex items-center justify-end gap-3">
+                        <button
+                          onClick={() => startEdit(account)}
+                          className="rounded-md p-1.5 text-slate-400 transition-colors hover:bg-indigo-50 hover:text-indigo-600 dark:hover:bg-indigo-500/10 dark:hover:text-indigo-400"
+                          aria-label="Edit"
+                        >
+                          <PencilIcon className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                          onClick={() => updateAccount.mutate({ id: account.id, isArchived: !account.isArchived })}
+                          className="text-xs font-medium text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400"
+                        >
+                          {account.isArchived ? 'Aktifkan' : 'Arsipkan'}
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}

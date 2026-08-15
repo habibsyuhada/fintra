@@ -223,7 +223,7 @@ export default function Layout() {
         </div>
       )}
 
-      <div className="mx-auto flex max-w-[1400px]">
+      <div className="flex w-full">
         {/* Desktop sidebar */}
         <aside className="sticky top-0 hidden h-svh w-64 shrink-0 flex-col border-r border-slate-200 bg-white/70 backdrop-blur-sm lg:flex dark:border-slate-800 dark:bg-slate-900/50">
           <div className="flex items-center gap-2.5 px-5 py-5">
@@ -290,7 +290,7 @@ export default function Layout() {
             </div>
           </header>
 
-          <main className="mx-auto max-w-5xl px-4 py-6 pb-24 lg:px-8 lg:py-8 lg:pb-8">
+          <main className="px-4 py-6 pb-24 lg:px-8 lg:py-8 lg:pb-8">
             <div className="animate-fade-in">
               <Outlet />
             </div>

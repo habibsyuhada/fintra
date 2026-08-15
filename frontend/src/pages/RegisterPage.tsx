@@ -7,17 +7,26 @@ import { useAuthStore } from '../lib/auth-store'
 import { useT } from '../lib/i18n'
 import { isAxiosError } from 'axios'
 import { Input } from '../components/ui/Field'
+import { PasswordInput } from '../components/ui/PasswordInput'
 import { Button } from '../components/ui/Button'
 import { AuthShell } from '../components/AuthShell'
 
-const schema = z.object({
-  name: z.string().min(1, 'Nama wajib diisi'),
-  email: z.string().email('Email tidak valid'),
-  password: z
-    .string()
-    .min(8, 'Minimal 8 karakter')
-    .regex(/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, 'Harus ada huruf besar, kecil, dan angka'),
-})
+const schema = z
+  .object({
+    name: z.string().min(1, 'Nama wajib diisi'),
+    email: z.string().email('Email tidak valid'),
+    password: z
+      .string()
+      .min(8, 'Minimal 8 karakter')
+      .regex(/[A-Za-z]/, 'Harus ada huruf')
+      .regex(/\d/, 'Harus ada angka')
+      .regex(/[^A-Za-z0-9]/, 'Harus ada simbol'),
+    confirmPassword: z.string().min(1, 'Konfirmasi password wajib diisi'),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: 'Konfirmasi password tidak cocok',
+    path: ['confirmPassword'],
+  })
 
 type FormValues = z.infer<typeof schema>
 
@@ -33,10 +42,13 @@ export default function RegisterPage() {
   } = useForm<FormValues>({ resolver: zodResolver(schema) })
 
   const onSubmit = handleSubmit((values) => {
-    registerUser.mutate(values, {
-      onSuccess: (data) =>
-        navigate('/', { state: data.migratedCount > 0 ? { migratedCount: data.migratedCount } : undefined }),
-    })
+    registerUser.mutate(
+      { name: values.name, email: values.email, password: values.password },
+      {
+        onSuccess: (data) =>
+          navigate('/', { state: data.migratedCount > 0 ? { migratedCount: data.migratedCount } : undefined }),
+      },
+    )
   })
 
   return (
@@ -46,7 +58,25 @@ export default function RegisterPage() {
       <form onSubmit={onSubmit} className="mt-6 space-y-4">
         <Input label={t('auth.name')} placeholder={t('auth.namePlaceholder')} {...register('name')} error={errors.name?.message} />
         <Input label={t('auth.email')} type="email" placeholder="kamu@email.com" {...register('email')} error={errors.email?.message} />
-        <Input label={t('auth.password')} type="password" placeholder="••••••••" {...register('password')} error={errors.password?.message} />
+        <div>
+          <PasswordInput
+            label={t('auth.password')}
+            placeholder="••••••••"
+            showLabel={t('auth.showPassword')}
+            hideLabel={t('auth.hidePassword')}
+            {...register('password')}
+            error={errors.password?.message}
+          />
+          {!errors.password && <p className="mt-1.5 text-xs text-slate-400 dark:text-slate-600">{t('auth.passwordHint')}</p>}
+        </div>
+        <PasswordInput
+          label={t('auth.confirmPassword')}
+          placeholder="••••••••"
+          showLabel={t('auth.showPassword')}
+          hideLabel={t('auth.hidePassword')}
+          {...register('confirmPassword')}
+          error={errors.confirmPassword?.message}
+        />
         {registerUser.isError && (
           <p className="rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-600 dark:bg-rose-950 dark:text-rose-400">
             {isAxiosError(registerUser.error) && registerUser.error.response?.data?.message

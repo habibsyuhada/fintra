@@ -7,6 +7,7 @@ import { useAuthStore } from '../lib/auth-store'
 import { useT } from '../lib/i18n'
 import { isAxiosError } from 'axios'
 import { Input } from '../components/ui/Field'
+import { PasswordInput } from '../components/ui/PasswordInput'
 import { Button } from '../components/ui/Button'
 import { AuthShell } from '../components/AuthShell'
 
@@ -41,7 +42,14 @@ export default function LoginPage() {
       <p className="mt-1.5 text-sm text-slate-500 dark:text-slate-400">{t('auth.loginSubtitle')}</p>
       <form onSubmit={onSubmit} className="mt-6 space-y-4">
         <Input label={t('auth.email')} type="email" placeholder="kamu@email.com" {...register('email')} error={errors.email?.message} />
-        <Input label={t('auth.password')} type="password" placeholder="••••••••" {...register('password')} error={errors.password?.message} />
+        <PasswordInput
+          label={t('auth.password')}
+          placeholder="••••••••"
+          showLabel={t('auth.showPassword')}
+          hideLabel={t('auth.hidePassword')}
+          {...register('password')}
+          error={errors.password?.message}
+        />
         {login.isError && (
           <p className="rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-600 dark:bg-rose-950 dark:text-rose-400">
             {isAxiosError(login.error) && login.error.response?.data?.message
