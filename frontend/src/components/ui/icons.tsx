@@ -106,6 +106,21 @@ export const TrashIcon = base(
     <path d="M10 11v6M14 11v6" />
   </>,
 )
+export const PencilIcon = base(
+  <path d="m16.5 3.5 4 4L8 20H4v-4L16.5 3.5Z" />,
+)
+export const EyeIcon = base(
+  <>
+    <path d="M2.5 12S5.8 5.5 12 5.5 21.5 12 21.5 12 18.2 18.5 12 18.5 2.5 12 2.5 12Z" />
+    <circle cx="12" cy="12" r="3" />
+  </>,
+)
+export const EyeOffIcon = base(
+  <>
+    <path d="M3 3l18 18" />
+    <path d="M10.6 5.6A10.6 10.6 0 0 1 12 5.5c6.2 0 9.5 6.5 9.5 6.5a15.6 15.6 0 0 1-3.24 4.06M6.5 6.86C4 8.53 2.5 12 2.5 12s3.3 6.5 9.5 6.5c1.34 0 2.55-.3 3.6-.77M9.9 9.9a3 3 0 0 0 4.2 4.2" />
+  </>,
+)
 export const CheckCircleIcon = base(
   <>
     <circle cx="12" cy="12" r="8.5" />

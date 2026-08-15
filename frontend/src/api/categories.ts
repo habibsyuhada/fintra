@@ -29,7 +29,7 @@ export interface CategoryInput {
 export function useCreateCategory() {
   const db = useDb()
   return {
-    mutate: (payload: CategoryInput, opts?: { onSuccess?: () => void }) => {
+    mutate: (payload: CategoryInput, opts?: { onSuccess?: (id: string) => void }) => {
       void (async () => {
         const id = newLocalId()
         await db.categories.put({
@@ -41,7 +41,7 @@ export function useCreateCategory() {
           parentId: payload.parentId ?? null,
         })
         await enqueue(db, 'category', 'create', id, { ...payload })
-        opts?.onSuccess?.()
+        opts?.onSuccess?.(id)
       })()
     },
     isPending: false,

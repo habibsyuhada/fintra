@@ -3,13 +3,13 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useAccounts } from '../api/accounts'
-import { useCategories } from '../api/categories'
-import { useCreateTransaction, useDeleteTransaction, useTransactions } from '../api/transactions'
+import { useCategories, useCreateCategory } from '../api/categories'
+import { useCreateTransaction, useDeleteTransaction, useTransactions, useUpdateTransaction } from '../api/transactions'
 import { useCreateTransfer } from '../api/transfers'
 import { downloadTransactionsExport, type ExportFormat } from '../api/exports'
 import { useOnlineStatus } from '../lib/network-status'
 import { useAuthStore } from '../lib/auth-store'
-import type { TransactionType } from '../lib/types'
+import type { Transaction, TransactionType } from '../lib/types'
 import { formatMoney, formatDate } from '../lib/format'
 import { PageHeader } from '../components/ui/PageHeader'
 import { Card } from '../components/ui/Card'
@@ -17,7 +17,7 @@ import { Button } from '../components/ui/Button'
 import { Input, Select } from '../components/ui/Field'
 import { EmptyState } from '../components/ui/EmptyState'
 import { LoadingRows } from '../components/ui/Spinner'
-import { PlusIcon, ArrowsRightLeftIcon, DownloadIcon, TrashIcon, InboxIcon } from '../components/ui/icons'
+import { PlusIcon, ArrowsRightLeftIcon, DownloadIcon, PencilIcon, TrashIcon, InboxIcon } from '../components/ui/icons'
 import clsx from 'clsx'
 
 const txSchema = z.object({
@@ -41,34 +41,74 @@ const transferSchema = z.object({
 type TransferFormValues = z.input<typeof transferSchema>
 type TransferFormOutput = z.output<typeof transferSchema>
 
-function TransactionForm({ onDone }: { onDone: () => void }) {
+function TransactionForm({ transaction, onDone }: { transaction?: Transaction; onDone: () => void }) {
   const { data: accounts } = useAccounts()
   const { data: categories } = useCategories()
   const createTransaction = useCreateTransaction()
+  const updateTransaction = useUpdateTransaction()
+  const createCategory = useCreateCategory()
+  const isEditing = Boolean(transaction)
+  const [showCategoryForm, setShowCategoryForm] = useState(false)
+  const [newCategoryName, setNewCategoryName] = useState('')
+
   const {
     register,
     handleSubmit,
     watch,
-    reset,
+    setValue,
+    setFocus,
     formState: { errors },
   } = useForm<TxFormValues, unknown, TxFormOutput>({
     resolver: zodResolver(txSchema),
-    defaultValues: { type: 'EXPENSE', date: new Date().toISOString().slice(0, 10) },
+    defaultValues: transaction
+      ? {
+          accountId: transaction.accountId,
+          categoryId: transaction.categoryId ?? '',
+          type: transaction.type,
+          amount: transaction.amount,
+          date: transaction.date.slice(0, 10),
+          note: transaction.note ?? '',
+        }
+      : { type: 'EXPENSE', date: new Date().toISOString().slice(0, 10) },
   })
   const type = watch('type')
 
   const onSubmit = handleSubmit((values) => {
-    createTransaction.mutate(
-      {
-        ...values,
-        categoryId: values.categoryId || undefined,
-        date: new Date(values.date).toISOString(),
-      },
-      { onSuccess: () => { reset(); onDone() } },
-    )
+    const payload = {
+      ...values,
+      categoryId: values.categoryId || undefined,
+      date: new Date(values.date).toISOString(),
+    }
+    if (transaction) {
+      updateTransaction.mutate({ id: transaction.id, ...payload })
+      onDone()
+    } else {
+      createTransaction.mutate(payload, {
+        onSuccess: () => {
+          setValue('amount', '')
+          setValue('note', '')
+          setFocus('amount')
+        },
+      })
+    }
   })
 
   const filteredCategories = categories?.filter((c) => c.type === type) ?? []
+
+  const handleAddCategory = () => {
+    const name = newCategoryName.trim()
+    if (!name) return
+    createCategory.mutate(
+      { name, type },
+      {
+        onSuccess: (id) => {
+          setValue('categoryId', id)
+          setNewCategoryName('')
+          setShowCategoryForm(false)
+        },
+      },
+    )
+  }
 
   return (
     <form onSubmit={onSubmit} className="grid grid-cols-1 gap-3 sm:grid-cols-3">
@@ -84,20 +124,52 @@ function TransactionForm({ onDone }: { onDone: () => void }) {
           </option>
         ))}
       </Select>
-      <Select label="Kategori" {...register('categoryId')}>
-        <option value="">Tanpa kategori</option>
-        {filteredCategories.map((c) => (
-          <option key={c.id} value={c.id}>
-            {c.name}
-          </option>
-        ))}
-      </Select>
+      <div>
+        <div className="flex items-center justify-between">
+          <span className="block text-xs font-medium text-slate-600 dark:text-slate-400">Kategori</span>
+          <button
+            type="button"
+            onClick={() => setShowCategoryForm((v) => !v)}
+            className="text-xs font-medium text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300"
+          >
+            {showCategoryForm ? 'Batal' : '+ Kategori baru'}
+          </button>
+        </div>
+        <Select {...register('categoryId')} wrapClassName="mt-0">
+          <option value="">Tanpa kategori</option>
+          {filteredCategories.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.name}
+            </option>
+          ))}
+        </Select>
+        {showCategoryForm && (
+          <div className="mt-2 flex gap-2">
+            <input
+              autoFocus
+              value={newCategoryName}
+              onChange={(e) => setNewCategoryName(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault()
+                  handleAddCategory()
+                }
+              }}
+              placeholder="Nama kategori baru"
+              className="w-full rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-100"
+            />
+            <Button type="button" size="sm" onClick={handleAddCategory} loading={createCategory.isPending}>
+              Tambah
+            </Button>
+          </div>
+        )}
+      </div>
       <Input label="Nominal" type="number" step="0.01" {...register('amount')} error={errors.amount?.message} />
       <Input label="Tanggal" type="date" {...register('date')} />
       <Input label="Catatan" {...register('note')} />
       <div className="sm:col-span-3">
-        <Button type="submit" loading={createTransaction.isPending}>
-          Simpan Transaksi
+        <Button type="submit" loading={!isEditing && createTransaction.isPending}>
+          {isEditing ? 'Simpan Perubahan' : 'Simpan Transaksi'}
         </Button>
       </div>
     </form>
@@ -156,12 +228,33 @@ function TransferForm({ onDone }: { onDone: () => void }) {
 
 export default function TransactionsPage() {
   const [showForm, setShowForm] = useState<false | 'transaction' | 'transfer'>(false)
+  const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null)
   const [typeFilter, setTypeFilter] = useState<TransactionType | ''>('')
   const { data, isLoading } = useTransactions({ type: typeFilter || undefined })
   const deleteTransaction = useDeleteTransaction()
   const [exporting, setExporting] = useState<ExportFormat | null>(null)
   const isGuest = useAuthStore((s) => s.isGuest)
   const online = useOnlineStatus() && !isGuest
+
+  const closeForm = () => {
+    setShowForm(false)
+    setEditingTransaction(null)
+  }
+
+  const startEditTransaction = (tx: Transaction) => {
+    setEditingTransaction(tx)
+    setShowForm('transaction')
+  }
+
+  const openTransactionForm = () => {
+    setEditingTransaction(null)
+    setShowForm('transaction')
+  }
+
+  const openTransferForm = () => {
+    setEditingTransaction(null)
+    setShowForm('transfer')
+  }
 
   const handleExport = async (format: ExportFormat) => {
     setExporting(format)
@@ -182,14 +275,14 @@ export default function TransactionsPage() {
             <Button
               variant={showForm === 'transaction' ? 'secondary' : 'primary'}
               icon={<PlusIcon className="h-4 w-4" />}
-              onClick={() => setShowForm(showForm === 'transaction' ? false : 'transaction')}
+              onClick={() => (showForm === 'transaction' ? closeForm() : openTransactionForm())}
             >
               {showForm === 'transaction' ? 'Batal' : 'Transaksi'}
             </Button>
             <Button
               variant="outline"
               icon={<ArrowsRightLeftIcon className="h-4 w-4" />}
-              onClick={() => setShowForm(showForm === 'transfer' ? false : 'transfer')}
+              onClick={() => (showForm === 'transfer' ? closeForm() : openTransferForm())}
             >
               {showForm === 'transfer' ? 'Batal' : 'Transfer'}
             </Button>
@@ -216,7 +309,14 @@ export default function TransactionsPage() {
 
       {showForm && (
         <Card className="animate-fade-in p-5">
-          {showForm === 'transaction' ? <TransactionForm onDone={() => setShowForm(false)} /> : <TransferForm onDone={() => setShowForm(false)} />}
+          <p className="mb-3 text-sm font-semibold text-slate-800 dark:text-slate-200">
+            {showForm === 'transaction' ? (editingTransaction ? 'Edit Transaksi' : 'Transaksi Baru') : 'Transfer Baru'}
+          </p>
+          {showForm === 'transaction' ? (
+            <TransactionForm key={editingTransaction?.id ?? 'new'} transaction={editingTransaction ?? undefined} onDone={closeForm} />
+          ) : (
+            <TransferForm onDone={closeForm} />
+          )}
         </Card>
       )}
 
@@ -270,13 +370,22 @@ export default function TransactionsPage() {
                       {formatMoney(tx.amount)}
                     </td>
                     <td className="px-5 py-3 text-right">
-                      <button
-                        onClick={() => deleteTransaction.mutate(tx.id)}
-                        className="rounded-md p-1.5 text-slate-400 transition-colors hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950"
-                        aria-label="Hapus"
-                      >
-                        <TrashIcon className="h-4 w-4" />
-                      </button>
+                      <div className="flex items-center justify-end gap-1">
+                        <button
+                          onClick={() => startEditTransaction(tx)}
+                          className="rounded-md p-1.5 text-slate-400 transition-colors hover:bg-indigo-50 hover:text-indigo-600 dark:hover:bg-indigo-500/10 dark:hover:text-indigo-400"
+                          aria-label="Edit"
+                        >
+                          <PencilIcon className="h-4 w-4" />
+                        </button>
+                        <button
+                          onClick={() => deleteTransaction.mutate(tx.id)}
+                          className="rounded-md p-1.5 text-slate-400 transition-colors hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950"
+                          aria-label="Hapus"
+                        >
+                          <TrashIcon className="h-4 w-4" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
