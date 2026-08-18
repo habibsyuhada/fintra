@@ -55,3 +55,15 @@ export function useCreateTransfer() {
     isPending: false,
   }
 }
+
+export function useDeleteTransfer() {
+  const db = useDb()
+  return {
+    mutate: (id: string) => {
+      void (async () => {
+        await db.transfers.delete(id)
+        await enqueue(db, 'transfer', 'delete', id)
+      })()
+    },
+  }
+}
