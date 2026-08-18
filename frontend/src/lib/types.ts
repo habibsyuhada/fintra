@@ -73,6 +73,7 @@ export interface Transfer {
   amount: string
   date: string
   note: string | null
+  createdAt: string
   fromAccount?: { id: string; name: string }
   toAccount?: { id: string; name: string }
 }

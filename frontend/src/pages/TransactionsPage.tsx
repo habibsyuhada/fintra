@@ -4,12 +4,13 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useAccounts } from '../api/accounts'
 import { useCategories, useCreateCategory } from '../api/categories'
-import { useCreateTransaction, useDeleteTransaction, useTransactions, useUpdateTransaction } from '../api/transactions'
-import { useCreateTransfer } from '../api/transfers'
+import { useCreateTransaction, useDeleteTransaction, useUpdateTransaction } from '../api/transactions'
+import { useCreateTransfer, useDeleteTransfer } from '../api/transfers'
+import { useTransactionFeed, type FeedTypeFilter } from '../api/feed'
 import { downloadTransactionsExport, type ExportFormat } from '../api/exports'
 import { useOnlineStatus } from '../lib/network-status'
 import { useAuthStore } from '../lib/auth-store'
-import type { Transaction, TransactionType } from '../lib/types'
+import type { Transaction } from '../lib/types'
 import { formatMoney, formatDate } from '../lib/format'
 import { PageHeader } from '../components/ui/PageHeader'
 import { Card } from '../components/ui/Card'
@@ -229,9 +230,10 @@ function TransferForm({ onDone }: { onDone: () => void }) {
 export default function TransactionsPage() {
   const [showForm, setShowForm] = useState<false | 'transaction' | 'transfer'>(false)
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null)
-  const [typeFilter, setTypeFilter] = useState<TransactionType | ''>('')
-  const { data, isLoading } = useTransactions({ type: typeFilter || undefined })
+  const [typeFilter, setTypeFilter] = useState<FeedTypeFilter>('')
+  const { data, isLoading } = useTransactionFeed({ type: typeFilter })
   const deleteTransaction = useDeleteTransaction()
+  const deleteTransfer = useDeleteTransfer()
   const [exporting, setExporting] = useState<ExportFormat | null>(null)
   const isGuest = useAuthStore((s) => s.isGuest)
   const online = useOnlineStatus() && !isGuest
@@ -259,7 +261,9 @@ export default function TransactionsPage() {
   const handleExport = async (format: ExportFormat) => {
     setExporting(format)
     try {
-      await downloadTransactionsExport(format, { type: typeFilter || undefined })
+      await downloadTransactionsExport(format, {
+        type: typeFilter === 'EXPENSE' || typeFilter === 'INCOME' ? typeFilter : undefined,
+      })
     } finally {
       setExporting(null)
     }
@@ -321,7 +325,7 @@ export default function TransactionsPage() {
       )}
 
       <div className="flex gap-2">
-        {(['', 'EXPENSE', 'INCOME'] as const).map((t) => (
+        {(['', 'EXPENSE', 'INCOME', 'TRANSFER'] as const).map((t) => (
           <button
             key={t}
             onClick={() => setTypeFilter(t)}
@@ -332,7 +336,7 @@ export default function TransactionsPage() {
                 : 'bg-white text-slate-600 ring-1 ring-inset ring-slate-200 hover:bg-slate-50 dark:bg-slate-900 dark:text-slate-400 dark:ring-slate-800',
             )}
           >
-            {t === '' ? 'Semua' : t === 'EXPENSE' ? 'Pengeluaran' : 'Pemasukan'}
+            {t === '' ? 'Semua' : t === 'EXPENSE' ? 'Pengeluaran' : t === 'INCOME' ? 'Pemasukan' : 'Transfer'}
           </button>
         ))}
       </div>
@@ -354,41 +358,74 @@ export default function TransactionsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                {data.items.map((tx) => (
-                  <tr key={tx.id} className="transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/40">
-                    <td className="whitespace-nowrap px-5 py-3 text-slate-600 dark:text-slate-400">{formatDate(tx.date)}</td>
-                    <td className="px-5 py-3 text-slate-900 dark:text-slate-100">{tx.account?.name}</td>
-                    <td className="px-5 py-3 text-slate-600 dark:text-slate-400">{tx.category?.name ?? '-'}</td>
-                    <td className="max-w-[200px] truncate px-5 py-3 text-slate-600 dark:text-slate-400">{tx.note ?? '-'}</td>
-                    <td
-                      className={clsx(
-                        'whitespace-nowrap px-5 py-3 text-right font-mono',
-                        tx.type === 'EXPENSE' ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400',
-                      )}
-                    >
-                      {tx.type === 'EXPENSE' ? '-' : '+'}
-                      {formatMoney(tx.amount)}
-                    </td>
-                    <td className="px-5 py-3 text-right">
-                      <div className="flex items-center justify-end gap-1">
-                        <button
-                          onClick={() => startEditTransaction(tx)}
-                          className="rounded-md p-1.5 text-slate-400 transition-colors hover:bg-indigo-50 hover:text-indigo-600 dark:hover:bg-indigo-500/10 dark:hover:text-indigo-400"
-                          aria-label="Edit"
-                        >
-                          <PencilIcon className="h-4 w-4" />
-                        </button>
-                        <button
-                          onClick={() => deleteTransaction.mutate(tx.id)}
-                          className="rounded-md p-1.5 text-slate-400 transition-colors hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950"
-                          aria-label="Hapus"
-                        >
-                          <TrashIcon className="h-4 w-4" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                {data.items.map((item) =>
+                  item.kind === 'transfer' ? (
+                    <tr key={`transfer-${item.id}`} className="transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/40">
+                      <td className="whitespace-nowrap px-5 py-3 text-slate-600 dark:text-slate-400">{formatDate(item.date)}</td>
+                      <td className="px-5 py-3 text-slate-900 dark:text-slate-100">
+                        <span className="inline-flex items-center gap-1.5">
+                          {item.fromAccount?.name ?? '-'}
+                          <ArrowsRightLeftIcon className="h-3.5 w-3.5 text-indigo-500" />
+                          {item.toAccount?.name ?? '-'}
+                        </span>
+                      </td>
+                      <td className="px-5 py-3">
+                        <span className="inline-flex rounded-full bg-indigo-50 px-2 py-0.5 text-xs font-medium text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400">
+                          Transfer
+                        </span>
+                      </td>
+                      <td className="max-w-[200px] truncate px-5 py-3 text-slate-600 dark:text-slate-400">{item.note ?? '-'}</td>
+                      <td className="whitespace-nowrap px-5 py-3 text-right font-mono text-indigo-600 dark:text-indigo-400">
+                        {formatMoney(item.amount)}
+                      </td>
+                      <td className="px-5 py-3 text-right">
+                        <div className="flex items-center justify-end gap-1">
+                          <button
+                            onClick={() => deleteTransfer.mutate(item.id)}
+                            className="rounded-md p-1.5 text-slate-400 transition-colors hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950"
+                            aria-label="Hapus"
+                          >
+                            <TrashIcon className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ) : (
+                    <tr key={item.id} className="transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/40">
+                      <td className="whitespace-nowrap px-5 py-3 text-slate-600 dark:text-slate-400">{formatDate(item.date)}</td>
+                      <td className="px-5 py-3 text-slate-900 dark:text-slate-100">{item.account?.name}</td>
+                      <td className="px-5 py-3 text-slate-600 dark:text-slate-400">{item.category?.name ?? '-'}</td>
+                      <td className="max-w-[200px] truncate px-5 py-3 text-slate-600 dark:text-slate-400">{item.note ?? '-'}</td>
+                      <td
+                        className={clsx(
+                          'whitespace-nowrap px-5 py-3 text-right font-mono',
+                          item.type === 'EXPENSE' ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400',
+                        )}
+                      >
+                        {item.type === 'EXPENSE' ? '-' : '+'}
+                        {formatMoney(item.amount)}
+                      </td>
+                      <td className="px-5 py-3 text-right">
+                        <div className="flex items-center justify-end gap-1">
+                          <button
+                            onClick={() => startEditTransaction(item)}
+                            className="rounded-md p-1.5 text-slate-400 transition-colors hover:bg-indigo-50 hover:text-indigo-600 dark:hover:bg-indigo-500/10 dark:hover:text-indigo-400"
+                            aria-label="Edit"
+                          >
+                            <PencilIcon className="h-4 w-4" />
+                          </button>
+                          <button
+                            onClick={() => deleteTransaction.mutate(item.id)}
+                            className="rounded-md p-1.5 text-slate-400 transition-colors hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950"
+                            aria-label="Hapus"
+                          >
+                            <TrashIcon className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ),
+                )}
               </tbody>
             </table>
           </div>

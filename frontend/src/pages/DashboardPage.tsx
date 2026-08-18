@@ -1,18 +1,18 @@
 import { useState } from 'react'
 import { useLocation } from 'react-router-dom'
 import { useAccounts } from '../api/accounts'
-import { useTransactions } from '../api/transactions'
+import { useTransactionFeed } from '../api/feed'
 import { formatMoney, formatDate } from '../lib/format'
 import { Card, CardHeader } from '../components/ui/Card'
 import { StatCard } from '../components/ui/StatCard'
 import { PageHeader } from '../components/ui/PageHeader'
 import { EmptyState } from '../components/ui/EmptyState'
 import { LoadingRows } from '../components/ui/Spinner'
-import { WalletIcon, ChartPieIcon, ReceiptListIcon, CheckCircleIcon, InboxIcon, ArrowUpRightIcon, ArrowDownRightIcon } from '../components/ui/icons'
+import { WalletIcon, ChartPieIcon, ReceiptListIcon, CheckCircleIcon, InboxIcon, ArrowUpRightIcon, ArrowDownRightIcon, ArrowsRightLeftIcon } from '../components/ui/icons'
 
 export default function DashboardPage() {
   const { data: accounts, isLoading: loadingAccounts } = useAccounts()
-  const { data: transactions, isLoading: loadingTx } = useTransactions({ limit: 10 })
+  const { data: transactions, isLoading: loadingTx } = useTransactionFeed({ limit: 10 })
   const location = useLocation()
   const migratedCount = (location.state as { migratedCount?: number } | null)?.migratedCount
   const [showMigratedBanner, setShowMigratedBanner] = useState(Boolean(migratedCount))
@@ -67,35 +67,54 @@ export default function DashboardPage() {
           <LoadingRows />
         ) : transactions && transactions.items.length > 0 ? (
           <ul className="divide-y divide-slate-100 dark:divide-slate-800">
-            {transactions.items.map((tx) => (
-              <li key={tx.id} className="flex items-center justify-between gap-3 px-5 py-3 text-sm transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/40">
-                <div className="flex min-w-0 items-center gap-3">
-                  <span
-                    className={
-                      tx.type === 'EXPENSE'
-                        ? 'flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-rose-50 text-rose-500 dark:bg-rose-950 dark:text-rose-400'
-                        : 'flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-emerald-500 dark:bg-emerald-950 dark:text-emerald-400'
-                    }
-                  >
-                    {tx.type === 'EXPENSE' ? <ArrowDownRightIcon className="h-4 w-4" /> : <ArrowUpRightIcon className="h-4 w-4" />}
-                  </span>
-                  <div className="min-w-0">
-                    <p className="truncate font-medium text-slate-900 dark:text-slate-100">{tx.note || tx.category?.name || 'Transaksi'}</p>
-                    <p className="truncate text-xs text-slate-500">
-                      {tx.account?.name} · {formatDate(tx.date)}
-                    </p>
+            {transactions.items.map((item) =>
+              item.kind === 'transfer' ? (
+                <li key={`transfer-${item.id}`} className="flex items-center justify-between gap-3 px-5 py-3 text-sm transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/40">
+                  <div className="flex min-w-0 items-center gap-3">
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-indigo-50 text-indigo-500 dark:bg-indigo-950 dark:text-indigo-400">
+                      <ArrowsRightLeftIcon className="h-4 w-4" />
+                    </span>
+                    <div className="min-w-0">
+                      <p className="truncate font-medium text-slate-900 dark:text-slate-100">{item.note || 'Transfer'}</p>
+                      <p className="truncate text-xs text-slate-500">
+                        {item.fromAccount?.name ?? '-'} → {item.toAccount?.name ?? '-'} · {formatDate(item.date)}
+                      </p>
+                    </div>
                   </div>
-                </div>
-                <span
-                  className={`shrink-0 whitespace-nowrap font-mono text-sm font-medium ${
-                    tx.type === 'EXPENSE' ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400'
-                  }`}
-                >
-                  {tx.type === 'EXPENSE' ? '-' : '+'}
-                  {formatMoney(tx.amount)}
-                </span>
-              </li>
-            ))}
+                  <span className="shrink-0 whitespace-nowrap font-mono text-sm font-medium text-indigo-600 dark:text-indigo-400">
+                    {formatMoney(item.amount)}
+                  </span>
+                </li>
+              ) : (
+                <li key={item.id} className="flex items-center justify-between gap-3 px-5 py-3 text-sm transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/40">
+                  <div className="flex min-w-0 items-center gap-3">
+                    <span
+                      className={
+                        item.type === 'EXPENSE'
+                          ? 'flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-rose-50 text-rose-500 dark:bg-rose-950 dark:text-rose-400'
+                          : 'flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-emerald-500 dark:bg-emerald-950 dark:text-emerald-400'
+                      }
+                    >
+                      {item.type === 'EXPENSE' ? <ArrowDownRightIcon className="h-4 w-4" /> : <ArrowUpRightIcon className="h-4 w-4" />}
+                    </span>
+                    <div className="min-w-0">
+                      <p className="truncate font-medium text-slate-900 dark:text-slate-100">{item.note || item.category?.name || 'Transaksi'}</p>
+                      <p className="truncate text-xs text-slate-500">
+                        {item.account?.name} · {formatDate(item.date)}
+                      </p>
+                    </div>
+                  </div>
+                  <span
+                    className={`shrink-0 whitespace-nowrap font-mono text-sm font-medium ${
+                      item.type === 'EXPENSE' ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400'
+                    }`}
+                  >
+                    {item.type === 'EXPENSE' ? '-' : '+'}
+                    {formatMoney(item.amount)}
+                  </span>
+                </li>
+              ),
+            )}
           </ul>
         ) : (
           <EmptyState icon={<InboxIcon className="h-6 w-6" />} title="Belum ada transaksi" description="Transaksi yang kamu catat akan muncul di sini." />
