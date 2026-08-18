@@ -70,6 +70,25 @@ describe('OpenRouterService', () => {
     });
   });
 
+  it('calls OPENROUTER_BASE_URL (e.g. a 9router proxy) instead of OpenRouter directly when configured', async () => {
+    const service = buildService({
+      OPENROUTER_API_KEY: 'test-key',
+      OPENROUTER_BASE_URL: 'https://9router.example.com/api/v1/',
+    });
+    const fetchMock = jest.spyOn(global, 'fetch').mockResolvedValue({
+      ok: true,
+      json: () =>
+        Promise.resolve({ choices: [{ message: { content: '{}' } }] }),
+    } as Response);
+
+    await service.extractReceipt(Buffer.from('fake-image'), 'image/jpeg');
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://9router.example.com/api/v1/chat/completions',
+      expect.objectContaining({ method: 'POST' }),
+    );
+  });
+
   it('falls back to nulls when the AI response is not valid JSON', async () => {
     const service = buildService({ OPENROUTER_API_KEY: 'test-key' });
     jest.spyOn(global, 'fetch').mockResolvedValue({

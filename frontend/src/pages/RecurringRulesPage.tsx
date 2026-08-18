@@ -16,6 +16,7 @@ import { PageHeader } from '../components/ui/PageHeader'
 import { Card } from '../components/ui/Card'
 import { Button } from '../components/ui/Button'
 import { Input, Select } from '../components/ui/Field'
+import { AmountInput } from '../components/ui/AmountInput'
 import { Badge } from '../components/ui/Badge'
 import { EmptyState } from '../components/ui/EmptyState'
 import { LoadingRows } from '../components/ui/Spinner'
@@ -57,6 +58,7 @@ export default function RecurringRulesPage() {
   const {
     register,
     handleSubmit,
+    control,
     watch,
     reset,
     formState: { errors },
@@ -109,7 +111,7 @@ export default function RecurringRulesPage() {
                 </option>
               ))}
             </Select>
-            <Input label="Nominal" type="number" step="0.01" {...register('amount')} error={errors.amount?.message} />
+            <AmountInput label="Nominal" control={control} name="amount" error={errors.amount?.message} />
             <Select label="Frekuensi" {...register('frequency')}>
               {Object.entries(FREQUENCY_LABEL).map(([value, label]) => (
                 <option key={value} value={value}>

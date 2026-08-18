@@ -16,6 +16,7 @@ import { PageHeader } from '../components/ui/PageHeader'
 import { Card } from '../components/ui/Card'
 import { Button } from '../components/ui/Button'
 import { Input, Select } from '../components/ui/Field'
+import { AmountInput } from '../components/ui/AmountInput'
 import { EmptyState } from '../components/ui/EmptyState'
 import { LoadingRows } from '../components/ui/Spinner'
 import { PlusIcon, ArrowsRightLeftIcon, DownloadIcon, PencilIcon, TrashIcon, InboxIcon } from '../components/ui/icons'
@@ -55,6 +56,7 @@ function TransactionForm({ transaction, onDone }: { transaction?: Transaction; o
   const {
     register,
     handleSubmit,
+    control,
     watch,
     setValue,
     setFocus,
@@ -165,7 +167,7 @@ function TransactionForm({ transaction, onDone }: { transaction?: Transaction; o
           </div>
         )}
       </div>
-      <Input label="Nominal" type="number" step="0.01" {...register('amount')} error={errors.amount?.message} />
+      <AmountInput label="Nominal" control={control} name="amount" error={errors.amount?.message} />
       <Input label="Tanggal" type="date" {...register('date')} />
       <Input label="Catatan" {...register('note')} />
       <div className="sm:col-span-3">
@@ -183,6 +185,7 @@ function TransferForm({ onDone }: { onDone: () => void }) {
   const {
     register,
     handleSubmit,
+    control,
     reset,
     formState: { errors },
   } = useForm<TransferFormValues, unknown, TransferFormOutput>({
@@ -215,7 +218,7 @@ function TransferForm({ onDone }: { onDone: () => void }) {
           </option>
         ))}
       </Select>
-      <Input label="Nominal" type="number" step="0.01" {...register('amount')} error={errors.amount?.message} />
+      <AmountInput label="Nominal" control={control} name="amount" error={errors.amount?.message} />
       <Input label="Tanggal" type="date" {...register('date')} />
       <Input label="Catatan" {...register('note')} />
       <div className="sm:col-span-3">

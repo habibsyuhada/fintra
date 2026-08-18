@@ -9,7 +9,8 @@ import { formatMoney } from '../lib/format'
 import { PageHeader } from '../components/ui/PageHeader'
 import { Card } from '../components/ui/Card'
 import { Button } from '../components/ui/Button'
-import { Input, Select } from '../components/ui/Field'
+import { Select } from '../components/ui/Field'
+import { AmountInput } from '../components/ui/AmountInput'
 import { Badge } from '../components/ui/Badge'
 import { EmptyState } from '../components/ui/EmptyState'
 import { PlusIcon, PiggyIcon, TrashIcon, AlertTriangleIcon } from '../components/ui/icons'
@@ -45,6 +46,7 @@ export default function BudgetsPage() {
   const {
     register,
     handleSubmit,
+    control,
     reset,
     formState: { errors },
   } = useForm<FormValues, unknown, FormOutput>({
@@ -84,7 +86,7 @@ export default function BudgetsPage() {
                 </option>
               ))}
             </Select>
-            <Input label="Nominal" type="number" step="0.01" {...register('amount')} error={errors.amount?.message} />
+            <AmountInput label="Nominal" control={control} name="amount" error={errors.amount?.message} />
             <Select label="Periode" {...register('period')}>
               <option value="WEEKLY">Mingguan</option>
               <option value="MONTHLY">Bulanan</option>

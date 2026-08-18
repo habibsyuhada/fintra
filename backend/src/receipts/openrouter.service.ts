@@ -24,6 +24,8 @@ Respond with ONLY a single JSON object, no markdown fences, no commentary, match
 }
 If a field cannot be determined, use null. Do not invent values.`;
 
+const DEFAULT_BASE_URL = 'https://openrouter.ai/api/v1';
+
 @Injectable()
 export class OpenRouterService {
   private readonly logger = new Logger(OpenRouterService.name);
@@ -47,10 +49,15 @@ export class OpenRouterService {
 
     const model =
       this.config.get<string>('OPENROUTER_MODEL') ?? 'google/gemini-2.5-flash';
+    // Requests go through 9router (a proxy in front of OpenRouter) by
+    // default; point OPENROUTER_BASE_URL at OpenRouter directly to bypass it.
+    const baseUrl = (
+      this.config.get<string>('OPENROUTER_BASE_URL') ?? DEFAULT_BASE_URL
+    ).replace(/\/+$/, '');
     const base64 = imageBuffer.toString('base64');
 
     const response = await fetch(
-      'https://openrouter.ai/api/v1/chat/completions',
+      `${baseUrl}/chat/completions`,
       {
         method: 'POST',
         headers: {
