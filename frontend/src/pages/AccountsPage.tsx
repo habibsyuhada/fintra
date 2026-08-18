@@ -9,6 +9,7 @@ import { PageHeader } from '../components/ui/PageHeader'
 import { Card } from '../components/ui/Card'
 import { Button } from '../components/ui/Button'
 import { Input, Select } from '../components/ui/Field'
+import { AmountInput } from '../components/ui/AmountInput'
 import { Badge } from '../components/ui/Badge'
 import { EmptyState } from '../components/ui/EmptyState'
 import { LoadingRows } from '../components/ui/Spinner'
@@ -42,6 +43,7 @@ export default function AccountsPage() {
   const {
     register,
     handleSubmit,
+    control,
     reset,
     formState: { errors },
   } = useForm<FormValues, unknown, FormOutput>({
@@ -105,7 +107,7 @@ export default function AccountsPage() {
                 </option>
               ))}
             </Select>
-            {!editingAccount && <Input label="Saldo Awal" type="number" step="0.01" {...register('initialBalance')} />}
+            {!editingAccount && <AmountInput label="Saldo Awal" control={control} name="initialBalance" />}
             <div className="flex items-end">
               <Button type="submit" loading={createAccount.isPending} className="w-full">
                 {editingAccount ? 'Simpan Perubahan' : 'Simpan'}

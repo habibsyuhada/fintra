@@ -46,6 +46,10 @@ class EnvironmentVariables {
 
   @IsString()
   @IsOptional()
+  OPENROUTER_BASE_URL?: string;
+
+  @IsString()
+  @IsOptional()
   OPENROUTER_API_KEY?: string;
 
   @IsString()

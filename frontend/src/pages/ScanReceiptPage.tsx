@@ -14,6 +14,7 @@ import { PageHeader } from '../components/ui/PageHeader'
 import { Card } from '../components/ui/Card'
 import { Button } from '../components/ui/Button'
 import { Input, Select } from '../components/ui/Field'
+import { AmountInput } from '../components/ui/AmountInput'
 import { CameraIcon, WifiOffIcon } from '../components/ui/icons'
 
 const schema = z.object({
@@ -45,6 +46,7 @@ export default function ScanReceiptPage() {
   const {
     register,
     handleSubmit,
+    control,
     reset,
     formState: { errors },
   } = useForm<FormValues, unknown, FormOutput>({ resolver: zodResolver(schema) })
@@ -168,7 +170,7 @@ export default function ScanReceiptPage() {
                       </option>
                     ))}
                   </Select>
-                  <Input label="Nominal" type="number" step="0.01" {...register('amount')} error={errors.amount?.message} />
+                  <AmountInput label="Nominal" control={control} name="amount" error={errors.amount?.message} />
                   <Input label="Tanggal" type="date" {...register('date')} />
                   <Input label="Catatan / Merchant" {...register('note')} />
                   <div className="flex gap-2 pt-2">
