@@ -59,6 +59,18 @@ class EnvironmentVariables {
   @IsString()
   @IsOptional()
   SENTRY_DSN?: string;
+
+  @IsString()
+  @IsOptional()
+  AI_BASE_URL?: string;
+
+  @IsString()
+  @IsOptional()
+  AI_API_KEY?: string;
+
+  @IsString()
+  @IsOptional()
+  AI_MODEL?: string;
 }
 
 export function validate(config: Record<string, unknown>) {

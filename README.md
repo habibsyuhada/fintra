@@ -61,4 +61,4 @@ Seluruh 7 fase di `PLAN.md` sudah selesai:
 
 Yang **belum** bisa diverifikasi dari sandbox ini karena butuh kredensial/infra nyata: build APK/IPA sungguhan (perlu Android SDK / Xcode — sudah divalidasi lewat CI), deploy ke VPS asli, dan panggilan AI dengan `OPENROUTER_API_KEY` sungguhan (jalur kode sudah diuji lewat unit test dengan fetch di-mock).
 
-Tambahan di luar roadmap awal `PLAN.md`, ditambahkan atas permintaan setelah fase 1-7 selesai: **dukungan offline-first** dan **mode tamu tanpa akun** (lihat bagian [Offline](#offline) di atas).
+Tambahan di luar roadmap awal `PLAN.md`, ditambahkan atas permintaan setelah fase 1-7 selesai: **dukungan offline-first**, **mode tamu tanpa akun** (lihat bagian [Offline](#offline) di atas), dan **Article** — artikel literasi keuangan harian ("dari mana duit datang / cara duit bekerja") yang digenerate otomatis oleh AI tiap pagi via cron (lihat [`backend/README.md`](./backend/README.md#article-literasi-keuangan-harian)), tersimpan di PostgreSQL, dan bisa dibaca/ditandai favorit dari web maupun mobile.

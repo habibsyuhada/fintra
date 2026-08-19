@@ -47,6 +47,12 @@ enum ReceiptStatus {
   REJECTED
 }
 
+enum ArticleStatus {
+  UNREAD
+  READ
+  FAVORIT
+}
+
 model User {
   id                String    @id @default(uuid())
   email             String    @unique
@@ -224,6 +230,36 @@ model Receipt {
 
   @@index([userId])
   @@map("receipts")
+}
+
+model Article {
+  id        String        @id @default(uuid())
+  title     String
+  slug      String        @unique
+  bodyMd    String        @map("body_md")
+  topicId   String?       @map("topic_id")
+  status    ArticleStatus @default(UNREAD)
+  isPublic  Boolean       @default(false) @map("is_public")
+  createdAt DateTime      @default(now()) @map("created_at")
+
+  topic TopicQueue? @relation(fields: [topicId], references: [id], onDelete: SetNull)
+
+  @@index([status])
+  @@index([createdAt])
+  @@map("articles")
+}
+
+model TopicQueue {
+  id        String    @id @default(uuid())
+  topic     String
+  context   String?
+  usedAt    DateTime? @map("used_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  articles Article[]
+
+  @@index([usedAt])
+  @@map("topic_queue")
 }
 
 model AuditLog {

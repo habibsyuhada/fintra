@@ -143,6 +143,7 @@ export const RefreshIcon = base(
   </>,
 )
 export const ChevronDownIcon = base(<path d="m6 9 6 6 6-6" />)
+export const ChevronLeftIcon = base(<path d="m15 6-6 6 6 6" />)
 export const AlertTriangleIcon = base(
   <>
     <path d="M10.3 4.3a2 2 0 0 1 3.4 0l7.3 12.6a2 2 0 0 1-1.7 3H4.7a2 2 0 0 1-1.7-3Z" />
@@ -189,4 +190,13 @@ export const GlobeIcon = base(
     <circle cx="12" cy="12" r="8.5" />
     <path d="M3.5 12h17M12 3.5c2.4 2.3 3.6 5.3 3.6 8.5s-1.2 6.2-3.6 8.5c-2.4-2.3-3.6-5.3-3.6-8.5S9.6 5.8 12 3.5Z" />
   </>,
+)
+export const BookOpenIcon = base(
+  <>
+    <path d="M12 6.5c-1.4-1.3-3.3-2-6-2-.6 0-1 .4-1 1v11c0 .6.4 1 1 1 2.7 0 4.6.7 6 2 1.4-1.3 3.3-2 6-2 .6 0 1-.4 1-1v-11c0-.6-.4-1-1-1-2.7 0-4.6.7-6 2Z" />
+    <path d="M12 6.5v13" />
+  </>,
+)
+export const StarIcon = base(
+  <path d="m12 3.5 2.6 5.4 5.9.7-4.3 4.1 1.1 5.9-5.3-2.9-5.3 2.9 1.1-5.9-4.3-4.1 5.9-.7Z" />,
 )

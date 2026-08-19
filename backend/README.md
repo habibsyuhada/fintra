@@ -38,6 +38,23 @@ See `prisma/schema.prisma`. Generated client lives in `src/generated/prisma` (gi
 - `POST /api/receipts/:id/reject` — discards the draft (`status` becomes `REJECTED`) without creating a transaction.
 - Images are stored on local disk under `uploads/receipts/` and served statically at `/uploads/receipts/...` (outside the `/api` prefix). Swap this for S3/object storage before running multiple backend replicas in production.
 
+## Article (literasi keuangan harian)
+
+Artikel harian bertema "dari mana duit datang / cara duit bekerja", digenerate otomatis oleh AI dan dibaca lewat web/mobile.
+
+- Skema: `articles` (`title`, `slug` unik, `body_md`, `topic_id`, `status` `UNREAD`/`READ`/`FAVORIT`, `is_public`, `created_at`) dan `topic_queue` (`topic`, `context`, `used_at` — `NULL` berarti belum dipakai). `prisma/migrations/20260819031721_seed_topic_queue` mengisi 30 topik awal.
+- `GET /api/articles?status=&page=&limit=` — daftar artikel, terbaru dulu, filter opsional by status.
+- `GET /api/articles/:idOrSlug` — detail (terima id atau slug).
+- `PATCH /api/articles/:idOrSlug` — `{ status?, isPublic? }`. `status` cuma satu nilai aktif (bukan flag terpisah) — favoritkan artikel akan mengganti status `READ`/`UNREAD` sebelumnya jadi `FAVORIT`.
+- `POST /api/topics` — `{ topic, context? }`, menambah ide topik baru ke antrean.
+- **Generator**: `npm run generate-article` (script standalone di `src/scripts/generate-article.ts`, dibangun dulu via `nest build` lalu dijalankan dari `dist/`, bukan lewat Nest app context). Alurnya: skip kalau sudah ada artikel yang dibuat hari ini (WIB) → ambil topik `topic_queue` yang `used_at`-nya `NULL` paling lama → panggil AI (endpoint OpenAI-compatible: `AI_BASE_URL`/`AI_API_KEY`/`AI_MODEL` di `.env`, mis. gateway 9router/OpenRouter) minta JSON `{ title, body_md }` → kalau JSON gagal di-parse/tidak valid, retry sekali; kalau masih gagal atau API error, exit non-zero tanpa menandai topik terpakai → insert `Article` + tandai `topic_queue.used_at` dalam satu transaction.
+- Jadwalkan tiap pagi jam 04:00 WIB via cron di VPS:
+  ```cron
+  0 21 * * * cd /opt/fintra/backend && npm run generate-article >> /var/log/fintra-generate-article.log 2>&1
+  ```
+  (21:00 UTC = 04:00 WIB; sesuaikan jika server cron sudah di zona WIB.)
+- Test manual: pastikan `AI_BASE_URL`/`AI_API_KEY`/`AI_MODEL` terisi di `.env`, lalu `npm run generate-article`. Untuk test tanpa memanggil API asli, arahkan `AI_BASE_URL` ke server lokal yang membalas format `chat/completions` OpenAI-compatible.
+
 ## Production hardening
 
 - **Audit log**: every create/update/delete on accounts, categories, transactions, transfers, budgets and receipts is recorded in `audit_logs` (`userId`, `entity`, `entityId`, `action`, `changes`, `createdAt`). Read via `GET /api/audit-logs?entity=&entityId=`. Failures to write an audit entry are logged but never fail the underlying request.
