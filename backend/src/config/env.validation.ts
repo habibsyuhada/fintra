@@ -59,6 +59,10 @@ class EnvironmentVariables {
   @IsString()
   @IsOptional()
   SENTRY_DSN?: string;
+
+  @IsString()
+  @IsOptional()
+  INTERNAL_API_KEY?: string;
 }
 
 export function validate(config: Record<string, unknown>) {

@@ -38,6 +38,21 @@ See `prisma/schema.prisma`. Generated client lives in `src/generated/prisma` (gi
 - `POST /api/receipts/:id/reject` — discards the draft (`status` becomes `REJECTED`) without creating a transaction.
 - Images are stored on local disk under `uploads/receipts/` and served statically at `/uploads/receipts/...` (outside the `/api` prefix). Swap this for S3/object storage before running multiple backend replicas in production.
 
+## Article (literasi keuangan harian)
+
+Artikel harian bertema "dari mana duit datang / cara duit bekerja", digenerate otomatis oleh AI dan dibaca lewat web/mobile.
+
+- Skema: `articles` (`title`, `slug` unik, `body_md`, `topic_id`, `status` `UNREAD`/`READ`/`FAVORIT`, `is_public`, `sources` JSON array `{title,url}[]`, `created_at`) dan `topic_queue` (`topic`, `context`, `used_at` — `NULL` berarti belum dipakai). `prisma/migrations/20260819031721_seed_topic_queue` mengisi 30 topik awal.
+- `GET /api/articles?status=&page=&limit=` — daftar artikel, terbaru dulu, filter opsional by status.
+- `GET /api/articles/:idOrSlug` — detail (terima id atau slug).
+- `PATCH /api/articles/:idOrSlug` — `{ status?, isPublic? }`. `status` cuma satu nilai aktif (bukan flag terpisah) — favoritkan artikel akan mengganti status `READ`/`UNREAD` sebelumnya jadi `FAVORIT`.
+- `POST /api/topics` — `{ topic, context? }`, menambah ide topik baru ke antrean (opsional — sekadar inspirasi tambahan, generator tidak wajib memakainya).
+- **Generator**: bukan script cron biasa, tapi **Routine** (scheduled trigger) Claude Code yang jalan tiap pagi 04:00 WIB. Firing-nya membangunkan sesi Claude yang benar-benar riset internet (web search) untuk konten literasi keuangan yang lagi viral/trending di Indonesia (tema "dari mana duit datang / cara duit bekerja"), menulis artikelnya (600-900 kata, struktur pembuka/penjelasan/analogi/perhitungan Rupiah/insight, plus 2-4 sumber referensi nyata), lalu mengirim hasilnya ke:
+  - `POST /api/articles/internal` — `{ title, bodyMd, sources?: { title, url }[] }`, diautentikasi pakai header `X-Internal-Key: <INTERNAL_API_KEY>` (bukan JWT user, karena tidak ada manusia yang login saat Routine jalan). Idempotent: menolak dengan `409` kalau sudah ada artikel yang dibuat hari ini (WIB). Endpoint ini selalu menolak request kalau `INTERNAL_API_KEY` belum diisi di `.env` (fail closed).
+  - `sources` ditampilkan di halaman baca sebagai kartu "Sumber & Referensi" (judul + domain + link ke sumber asli) — bukan embed script pihak ketiga, supaya tidak menambah dependency ke widget eksternal (Twitter/IG/TikTok embed.js) di aplikasi finansial.
+- Isi `INTERNAL_API_KEY` (string acak panjang) di `.env` sebelum mengaktifkan Routine-nya.
+- Test manual: pastikan `AI_BASE_URL`/`AI_API_KEY`/`AI_MODEL` terisi di `.env`, lalu `npm run generate-article`. Untuk test tanpa memanggil API asli, arahkan `AI_BASE_URL` ke server lokal yang membalas format `chat/completions` OpenAI-compatible.
+
 ## Production hardening
 
 - **Audit log**: every create/update/delete on accounts, categories, transactions, transfers, budgets and receipts is recorded in `audit_logs` (`userId`, `entity`, `entityId`, `action`, `changes`, `createdAt`). Read via `GET /api/audit-logs?entity=&entityId=`. Failures to write an audit entry are logged but never fail the underlying request.

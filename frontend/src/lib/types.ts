@@ -93,6 +93,33 @@ export interface Budget {
   status: BudgetStatus
 }
 
+export type ArticleStatus = 'UNREAD' | 'READ' | 'FAVORIT'
+
+export interface ArticleSource {
+  title: string
+  url: string
+}
+
+export interface Article {
+  id: string
+  title: string
+  slug: string
+  bodyMd: string
+  topicId: string | null
+  status: ArticleStatus
+  isPublic: boolean
+  sources: ArticleSource[] | null
+  createdAt: string
+}
+
+export interface ArticlePage {
+  items: Article[]
+  total: number
+  page: number
+  limit: number
+  totalPages: number
+}
+
 export interface CashflowReport {
   year: number
   months: { month: number; income: number; expense: number; net: number }[]

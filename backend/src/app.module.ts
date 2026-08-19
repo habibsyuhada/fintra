@@ -18,6 +18,8 @@ import { ReceiptsModule } from './receipts/receipts.module';
 import { AuditLogModule } from './audit-log/audit-log.module';
 import { RecurringRulesModule } from './recurring-rules/recurring-rules.module';
 import { ExportsModule } from './exports/exports.module';
+import { ArticlesModule } from './articles/articles.module';
+import { TopicQueueModule } from './topic-queue/topic-queue.module';
 
 @Module({
   imports: [
@@ -65,6 +67,8 @@ import { ExportsModule } from './exports/exports.module';
     ReceiptsModule,
     RecurringRulesModule,
     ExportsModule,
+    ArticlesModule,
+    TopicQueueModule,
   ],
   controllers: [HealthController],
   providers: [

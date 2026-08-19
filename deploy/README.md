@@ -29,19 +29,29 @@ Restore: `./deploy/backup/restore-db.sh /var/backups/fintra/fintra-<timestamp>.s
 
 Sebaiknya salin hasil backup ke penyimpanan terpisah dari VPS (mis. rsync ke storage lain / object storage) — script ini hanya menangani backup lokal + rotasi.
 
-## 4. CI/CD otomatis (opsional)
+## 4. Artikel harian (AI)
+
+Fitur **Article** menggenerate satu artikel literasi keuangan baru tiap hari, ditulis oleh Claude Code yang benar-benar riset internet (bukan script cron biasa) lewat sebuah **Routine** terjadwal 04:00 WIB — detail alurnya di [`backend/README.md`](../backend/README.md#article-literasi-keuangan-harian).
+
+Yang perlu disiapkan di sisi VPS:
+
+1. Isi `INTERNAL_API_KEY` (string acak panjang) di `.env` backend, lalu `docker compose up -d --build` supaya env baru terbaca.
+2. Pastikan `https://DOMAIN/api/articles/internal` bisa diakses dari luar (lewat Nginx yang sudah proxy `/api/`) — endpoint ini yang dipanggil Routine dengan header `X-Internal-Key`.
+3. Beritahu URL publik backend + nilai `INTERNAL_API_KEY` tadi supaya Routine-nya bisa dikonfigurasi untuk menembak endpoint yang benar.
+
+## 5. CI/CD otomatis (opsional)
 
 `.github/workflows/deploy.yml` men-deploy otomatis ke VPS saat push ke `main`. Nonaktif secara default sampai dikonfigurasi:
 
 - Repository variable: `DEPLOY_ENABLED = true`
 - Repository secrets: `VPS_HOST`, `VPS_USER`, `VPS_SSH_KEY`, `VPS_DEPLOY_PATH`
 
-## 5. Environment terpisah (dev / staging / prod)
+## 6. Environment terpisah (dev / staging / prod)
 
 - **dev**: `docker-compose.dev.yml` (Postgres + Redis lokal saja) + `npm run start:dev` / `npm run dev`.
 - **staging**: instance VPS terpisah (atau port berbeda di VPS yang sama) dengan `.env` sendiri (`NODE_ENV=staging`), database terpisah. Gunakan `docker-compose.yml` yang sama dengan env vars berbeda (`POSTGRES_PORT`, `BACKEND_PORT`, `HTTP_PORT`, dll sudah bisa di-override lewat `.env`).
 - **prod**: `docker-compose.yml` seperti di atas dengan `NODE_ENV=production`.
 
-## 6. Monitoring
+## 7. Monitoring
 
 Set `SENTRY_DSN` di `.env` backend untuk mengaktifkan error tracking (kosongkan untuk menonaktifkan). Log terstruktur JSON (pino) tersedia di stdout container — arahkan ke agregator log pilihan (mis. `docker compose logs`, atau ship ke layanan seperti Loki/Datadog).
