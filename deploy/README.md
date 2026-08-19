@@ -31,13 +31,13 @@ Sebaiknya salin hasil backup ke penyimpanan terpisah dari VPS (mis. rsync ke sto
 
 ## 4. Artikel harian (AI)
 
-Fitur **Article** menggenerate satu artikel literasi keuangan baru tiap hari lewat `npm run generate-article` di backend (lihat [`backend/README.md`](../backend/README.md#article-literasi-keuangan-harian)). Isi `AI_BASE_URL`/`AI_API_KEY`/`AI_MODEL` di `.env`, lalu jadwalkan via cron di VPS — jalankan di dalam container backend yang sudah punya `DATABASE_URL` dan env AI:
+Fitur **Article** menggenerate satu artikel literasi keuangan baru tiap hari, ditulis oleh Claude Code yang benar-benar riset internet (bukan script cron biasa) lewat sebuah **Routine** terjadwal 04:00 WIB — detail alurnya di [`backend/README.md`](../backend/README.md#article-literasi-keuangan-harian).
 
-```cron
-0 21 * * * cd /opt/fintra && docker compose exec -T backend npm run generate-article >> /var/log/fintra-generate-article.log 2>&1
-```
+Yang perlu disiapkan di sisi VPS:
 
-(21:00 UTC = 04:00 WIB.)
+1. Isi `INTERNAL_API_KEY` (string acak panjang) di `.env` backend, lalu `docker compose up -d --build` supaya env baru terbaca.
+2. Pastikan `https://DOMAIN/api/articles/internal` bisa diakses dari luar (lewat Nginx yang sudah proxy `/api/`) — endpoint ini yang dipanggil Routine dengan header `X-Internal-Key`.
+3. Beritahu URL publik backend + nilai `INTERNAL_API_KEY` tadi supaya Routine-nya bisa dikonfigurasi untuk menembak endpoint yang benar.
 
 ## 5. CI/CD otomatis (opsional)
 

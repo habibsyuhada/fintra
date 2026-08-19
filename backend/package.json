@@ -17,8 +17,7 @@
     "test:watch": "node --experimental-vm-modules node_modules/.bin/jest --watch",
     "test:cov": "node --experimental-vm-modules node_modules/.bin/jest --coverage",
     "test:debug": "node --inspect-brk --experimental-vm-modules -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "NODE_ENV=test node --experimental-vm-modules node_modules/.bin/jest --config ./test/jest-e2e.json",
-    "generate-article": "nest build && node dist/scripts/generate-article.js"
+    "test:e2e": "NODE_ENV=test node --experimental-vm-modules node_modules/.bin/jest --config ./test/jest-e2e.json"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",

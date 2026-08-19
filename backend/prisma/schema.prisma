@@ -240,6 +240,7 @@ model Article {
   topicId   String?       @map("topic_id")
   status    ArticleStatus @default(UNREAD)
   isPublic  Boolean       @default(false) @map("is_public")
+  sources   Json?
   createdAt DateTime      @default(now()) @map("created_at")
 
   topic TopicQueue? @relation(fields: [topicId], references: [id], onDelete: SetNull)

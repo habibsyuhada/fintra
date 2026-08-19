@@ -95,6 +95,11 @@ export interface Budget {
 
 export type ArticleStatus = 'UNREAD' | 'READ' | 'FAVORIT'
 
+export interface ArticleSource {
+  title: string
+  url: string
+}
+
 export interface Article {
   id: string
   title: string
@@ -103,6 +108,7 @@ export interface Article {
   topicId: string | null
   status: ArticleStatus
   isPublic: boolean
+  sources: ArticleSource[] | null
   createdAt: string
 }
 

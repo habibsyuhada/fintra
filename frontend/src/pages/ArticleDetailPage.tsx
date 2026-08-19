@@ -7,8 +7,42 @@ import { Card } from '../components/ui/Card'
 import { Button } from '../components/ui/Button'
 import { Spinner } from '../components/ui/Spinner'
 import { EmptyState } from '../components/ui/EmptyState'
-import { BookOpenIcon, ChevronLeftIcon, StarIcon } from '../components/ui/icons'
+import { ArrowUpRightIcon, BookOpenIcon, ChevronLeftIcon, StarIcon } from '../components/ui/icons'
+import type { ArticleSource } from '../lib/types'
 import clsx from 'clsx'
+
+function sourceHostname(url: string): string {
+  try {
+    return new URL(url).hostname.replace(/^www\./, '')
+  } catch {
+    return url
+  }
+}
+
+function SourcesSection({ sources }: { sources: ArticleSource[] }) {
+  return (
+    <div className="mt-6 border-t border-slate-100 pt-4 dark:border-slate-800">
+      <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Sumber &amp; Referensi</p>
+      <div className="mt-2.5 space-y-2">
+        {sources.map((source, i) => (
+          <a
+            key={i}
+            href={source.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50/60 px-3.5 py-2.5 text-sm transition-colors hover:border-indigo-200 hover:bg-indigo-50/40 dark:border-slate-800 dark:bg-slate-800/40 dark:hover:border-indigo-900 dark:hover:bg-indigo-500/5"
+          >
+            <div className="min-w-0">
+              <p className="truncate font-medium text-slate-800 dark:text-slate-200">{source.title}</p>
+              <p className="truncate text-xs text-slate-500">{sourceHostname(source.url)}</p>
+            </div>
+            <ArrowUpRightIcon className="h-4 w-4 shrink-0 text-slate-400" />
+          </a>
+        ))}
+      </div>
+    </div>
+  )
+}
 
 const markdownComponents = {
   h1: (p: React.ComponentPropsWithoutRef<'h1'>) => <h2 className="mt-6 text-lg font-bold text-slate-900 first:mt-0 dark:text-slate-100" {...p} />,
@@ -86,6 +120,8 @@ export default function ArticleDetailPage() {
         <div className="mt-2 border-t border-slate-100 pt-4 dark:border-slate-800">
           <ReactMarkdown components={markdownComponents}>{article.bodyMd}</ReactMarkdown>
         </div>
+
+        {article.sources && article.sources.length > 0 && <SourcesSection sources={article.sources} />}
       </Card>
     </div>
   )
