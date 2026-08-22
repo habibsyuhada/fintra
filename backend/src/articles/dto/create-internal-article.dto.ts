@@ -6,6 +6,7 @@ import {
   IsOptional,
   IsString,
   IsUrl,
+  IsUUID,
   MaxLength,
   MinLength,
   ValidateNested,
@@ -30,6 +31,13 @@ export class CreateInternalArticleDto {
   @IsString()
   @MinLength(400)
   bodyMd: string;
+
+  /** Id of the TopicQueue entry this article was written from, if the
+   * generator picked one from GET /api/topics/internal instead of
+   * free-roaming research. */
+  @IsUUID()
+  @IsOptional()
+  topicId?: string;
 
   @IsArray()
   @ArrayMaxSize(6)
