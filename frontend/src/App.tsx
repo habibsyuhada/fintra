@@ -12,6 +12,7 @@ import ScanReceiptPage from './pages/ScanReceiptPage'
 import RecurringRulesPage from './pages/RecurringRulesPage'
 import ArticlesPage from './pages/ArticlesPage'
 import ArticleDetailPage from './pages/ArticleDetailPage'
+import TopicsPage from './pages/TopicsPage'
 import SettingsPage from './pages/SettingsPage'
 
 export default function App() {
@@ -30,6 +31,7 @@ export default function App() {
         <Route path="/recurring" element={<RecurringRulesPage />} />
         <Route path="/articles" element={<ArticlesPage />} />
         <Route path="/articles/:idOrSlug" element={<ArticleDetailPage />} />
+        <Route path="/topics" element={<TopicsPage />} />
         <Route path="/settings" element={<SettingsPage />} />
       </Route>
     </Routes>
