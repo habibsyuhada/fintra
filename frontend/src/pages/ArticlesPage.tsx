@@ -3,7 +3,8 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Link } from 'react-router-dom'
-import { useArticles, useAddTopic } from '../api/articles'
+import { useArticles } from '../api/articles'
+import { useAddTopic } from '../api/topics'
 import { formatDate } from '../lib/format'
 import type { ArticleStatus } from '../lib/types'
 import { PageHeader } from '../components/ui/PageHeader'
@@ -13,7 +14,7 @@ import { Input } from '../components/ui/Field'
 import { Badge } from '../components/ui/Badge'
 import { EmptyState } from '../components/ui/EmptyState'
 import { LoadingRows } from '../components/ui/Spinner'
-import { BookOpenIcon, PlusIcon, StarIcon } from '../components/ui/icons'
+import { BookOpenIcon, InboxIcon, PlusIcon, StarIcon } from '../components/ui/icons'
 import clsx from 'clsx'
 
 const topicSchema = z.object({
@@ -56,13 +57,20 @@ export default function ArticlesPage() {
         title="Article"
         description="Artikel literasi keuangan harian — dari mana duit datang, dan cara duit bekerja."
         actions={
-          <Button
-            icon={<PlusIcon className="h-4 w-4" />}
-            onClick={() => setShowTopicForm((v) => !v)}
-            variant={showTopicForm ? 'secondary' : 'primary'}
-          >
-            {showTopicForm ? 'Batal' : 'Tambah Topik'}
-          </Button>
+          <>
+            <Link to="/topics">
+              <Button variant="secondary" icon={<InboxIcon className="h-4 w-4" />}>
+                Lihat Topik
+              </Button>
+            </Link>
+            <Button
+              icon={<PlusIcon className="h-4 w-4" />}
+              onClick={() => setShowTopicForm((v) => !v)}
+              variant={showTopicForm ? 'secondary' : 'primary'}
+            >
+              {showTopicForm ? 'Batal' : 'Tambah Topik'}
+            </Button>
+          </>
         }
       />
 

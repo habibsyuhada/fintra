@@ -120,6 +120,22 @@ export interface ArticlePage {
   totalPages: number
 }
 
+export interface Topic {
+  id: string
+  topic: string
+  context: string | null
+  usedAt: string | null
+  createdAt: string
+}
+
+export interface TopicPage {
+  items: Topic[]
+  total: number
+  page: number
+  limit: number
+  totalPages: number
+}
+
 export interface CashflowReport {
   year: number
   months: { month: number; income: number; expense: number; net: number }[]

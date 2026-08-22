@@ -47,14 +47,3 @@ export function useUpdateArticle() {
     },
   })
 }
-
-export interface AddTopicInput {
-  topic: string
-  context?: string
-}
-
-export function useAddTopic() {
-  return useMutation({
-    mutationFn: async (payload: AddTopicInput) => (await api.post('/topics', payload)).data,
-  })
-}
