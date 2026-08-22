@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
   NotFoundException,
@@ -69,19 +70,40 @@ export class ArticlesService {
       throw new ConflictException('Artikel hari ini (WIB) sudah pernah dibuat');
     }
 
+    if (dto.topicId) {
+      const topic = await this.prisma.topicQueue.findUnique({
+        where: { id: dto.topicId },
+      });
+      if (!topic) {
+        throw new BadRequestException('topicId tidak ditemukan');
+      }
+    }
+
     const slug = await this.uniqueSlug(slugify(dto.title));
-    return this.prisma.article.create({
-      data: {
-        title: dto.title,
-        slug,
-        bodyMd: dto.bodyMd,
-        sources: dto.sources
-          ? (JSON.parse(JSON.stringify(dto.sources)) as object)
-          : undefined,
-        status: 'UNREAD',
-        isPublic: false,
-      },
-    });
+    const [article] = await this.prisma.$transaction([
+      this.prisma.article.create({
+        data: {
+          title: dto.title,
+          slug,
+          bodyMd: dto.bodyMd,
+          topicId: dto.topicId,
+          sources: dto.sources
+            ? (JSON.parse(JSON.stringify(dto.sources)) as object)
+            : undefined,
+          status: 'UNREAD',
+          isPublic: false,
+        },
+      }),
+      ...(dto.topicId
+        ? [
+            this.prisma.topicQueue.update({
+              where: { id: dto.topicId },
+              data: { usedAt: new Date() },
+            }),
+          ]
+        : []),
+    ]);
+    return article;
   }
 
   async findAll(query: QueryArticleDto) {

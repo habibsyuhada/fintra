@@ -46,6 +46,16 @@ export class TopicQueueService {
     return { items, total, page, limit, totalPages: Math.ceil(total / limit) };
   }
 
+  /** Used by the daily article-generator Routine to see what the user has
+   * queued up. Oldest first, so ideas don't sit unused indefinitely. */
+  async findPendingForGenerator(limit = 20) {
+    return this.prisma.topicQueue.findMany({
+      where: { usedAt: null },
+      orderBy: { createdAt: 'asc' },
+      take: limit,
+    });
+  }
+
   async markDone(userId: string, id: string, done: boolean) {
     const existing = await this.prisma.topicQueue.findUnique({
       where: { id },
